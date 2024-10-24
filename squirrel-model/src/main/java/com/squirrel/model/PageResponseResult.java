@@ -20,7 +20,7 @@ public class PageResponseResult extends ResponseResult implements Serializable {
     private Integer currentPage;
 
     /**
-     * 限制条数
+     * 每页大小
      */
     private Integer size;
 

@@ -1,8 +1,11 @@
 package com.squirrel.enums;
 
+import lombok.Getter;
+
 /**
  * 项目中 http 状态码枚举
  */
+@Getter
 public enum AppHttpCodeEnum {
 
     // 成功段固定为 200
@@ -34,19 +37,12 @@ public enum AppHttpCodeEnum {
     MATERIAL_REFERENCE_FAIL(3501,"素材引用失效");
 
 
-    int code;
-    String errorMessage;
+    final int code;
+    final String errorMessage;
 
     AppHttpCodeEnum(int code, String errorMessage){
         this.code = code;
         this.errorMessage = errorMessage;
     }
 
-    public int getCode() {
-        return code;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
 }

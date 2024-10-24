@@ -1,7 +1,8 @@
 package com.squirrel.model;
 
 import com.squirrel.enums.AppHttpCodeEnum;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serializable;
 
@@ -9,17 +10,20 @@ import java.io.Serializable;
  * 通用的结果返回类
  * @param <T> 泛型
  */
-@Data
 public class ResponseResult<T> implements Serializable {
 
     /**
-     * 主机地址
+     * 服务器地址
      */
+    @Getter
+    @Setter
     private String host;
 
     /**
      * 状态码
      */
+    @Setter
+    @Getter
     private Integer code;
 
     /**
@@ -30,6 +34,8 @@ public class ResponseResult<T> implements Serializable {
     /**
      * 额外的数据
      */
+    @Setter
+    @Getter
     private T data;
 
     /**
@@ -124,4 +130,14 @@ public class ResponseResult<T> implements Serializable {
         this.data = data;
         return this;
     }
+
+    public String getErrorMessage(){
+        return message;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.message = errorMessage;
+    }
+
+
 }
