@@ -17,6 +17,8 @@
     <modules>
         <module>squirrel-model</module>
         <module>squirrel-service</module>
+        <module>squirrel-gateway</module>
+        <module>squirrel-feign-api</module>
     </modules>
 
     <properties>

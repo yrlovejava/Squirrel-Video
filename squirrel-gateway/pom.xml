@@ -9,13 +9,10 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>squirrel-service</artifactId>
+    <artifactId>squirrel-gateway</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>squirrel-interact</module>
-        <module>squirrel-search</module>
-        <module>squirrel-user</module>
-        <module>squirrel-video</module>
+        <module>squirrel-app-gateway</module>
     </modules>
 
     <properties>
@@ -25,38 +22,22 @@
     </properties>
 
     <dependencies>
-        <!-- model 模块 -->
+        <!-- spring gateway 依赖 -->
         <dependency>
-            <groupId>com.squirrel</groupId>
-            <artifactId>squirrel-model</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
-        <!-- gson 依赖 -->
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-        </dependency>
-        <!-- spring boot web 依赖 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
+
         <!-- nacos 注册依赖 -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
+
         <!-- nacos 配置依赖 -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
-        <!-- hutool -->
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-        </dependency>
     </dependencies>
-
 </project>

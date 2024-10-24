@@ -1,0 +1,16 @@
+server:
+  port: 51003
+spring:
+  application:
+    name: squirrel-user
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 192.168.183.131:80
+        namespace: b7a7a6fe-afe6-4795-b202-f2d40e0493fe
+      config:
+        server-addr: 192.168.183.131:80
+        namespace: b7a7a6fe-afe6-4795-b202-f2d40e0493fe
+        file-extension: yml
