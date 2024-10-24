@@ -11,15 +11,20 @@
     <groupId>com.squirrel</groupId>
     <artifactId>video</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>Squirrel Video</name>
     <description>Squirrel Video</description>
+    <modules>
+        <module>squirrel-model</module>
+        <module>squirrel-service</module>
+    </modules>
 
     <properties>
         <!-- java 版本 -->
-        <java.version>21</java.version>
+        <java.version>8</java.version>
         <!-- 项目编译JDK版本 -->
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
 
         <!-- SpringCloud 版本管理，定义常用组件版本，后续直接使用无需添加版本号 -->
         <cloud.version>2021.0.4</cloud.version>
@@ -166,6 +171,17 @@
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -174,7 +190,7 @@
                 <configuration>
                     <excludes>
                         <exclude>
-                            <groupId>org.project.lombok</groupId>
+                            <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
