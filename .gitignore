@@ -8,3 +8,7 @@
 *.ipr
 workspace.xml
 *.log
+/.idea/.gitignore
+/.idea/encodings.xml
+/.idea/misc.xml
+/.idea/vcs.xml
