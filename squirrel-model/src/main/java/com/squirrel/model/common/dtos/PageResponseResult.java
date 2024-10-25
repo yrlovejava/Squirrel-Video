@@ -1,4 +1,4 @@
-package com.squirrel.model;
+package com.squirrel.model.common.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
