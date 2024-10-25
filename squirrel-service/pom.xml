@@ -32,6 +32,12 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+        <!-- common 模块 -->
+        <dependency>
+            <groupId>com.squirrel</groupId>
+            <artifactId>squirrel-common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- gson 依赖 -->
         <dependency>
             <groupId>com.google.code.gson</groupId>

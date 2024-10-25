@@ -19,6 +19,8 @@
         <module>squirrel-service</module>
         <module>squirrel-gateway</module>
         <module>squirrel-feign-api</module>
+        <module>squirrel-common</module>
+        <module>squirrel-basic</module>
     </modules>
 
     <properties>
@@ -172,17 +174,6 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>

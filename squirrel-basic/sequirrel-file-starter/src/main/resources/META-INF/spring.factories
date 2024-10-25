@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.squirrel.config.QiniuConfig\
+  com.squirrel.service.FileStorageService
