@@ -1,6 +1,6 @@
 package com.squirrel.controller;
 
-import com.squirrel.model.common.dtos.ResponseResult;
+import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.dtos.RegisterDTO;
 import com.squirrel.model.user.dtos.UserLoginDTO;
 import com.squirrel.service.UserLoginService;

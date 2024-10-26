@@ -5,12 +5,16 @@ import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.squirrel.constant.UserConstant;
-import com.squirrel.enums.AppHttpCodeEnum;
-import com.squirrel.mapper.UserLoginMapper;
-import com.squirrel.model.common.dtos.ResponseResult;
+import com.squirrel.exception.ErrorParamException;
+import com.squirrel.exception.NullParamException;
+import com.squirrel.exception.PasswordErrorException;
+import com.squirrel.exception.UserNotExitedException;
+import com.squirrel.mapper.UserMapper;
+import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.dtos.RegisterDTO;
 import com.squirrel.model.user.dtos.UserLoginDTO;
 import com.squirrel.model.user.pojos.User;
+import com.squirrel.model.user.vos.UserLoginVO;
 import com.squirrel.service.UserLoginService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -18,13 +22,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用户登录操作接口实现类
  */
 @Slf4j
 @Service
-public class UserLoginServiceImpl extends ServiceImpl<UserLoginMapper, User> implements UserLoginService {
+public class UserLoginServiceImpl extends ServiceImpl<UserMapper, User> implements UserLoginService {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -39,27 +44,27 @@ public class UserLoginServiceImpl extends ServiceImpl<UserLoginMapper, User> imp
         log.info("用户注册: {}", dto);
         // 1.参数校验
         if (dto == null || dto.getPhone().isEmpty() || dto.getPassword().isEmpty()) {
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"注册信息不能为空");
+            throw new NullParamException("注册信息不能为空！");
         }
 
         // 2.检验手机号是否有效
         String phone = dto.getPhone();
         if (!Validator.isMatchRegex(UserConstant.PHONE_REGEX,phone)){
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"手机号不合法");
+            throw new ErrorParamException("手机号不合法！");
         }
 
         // 3.检验密码的长度
         String password = dto.getPassword();
         int len = password.length();
         if(len < UserConstant.PASSWORD_MIN_LENGTH || len > UserConstant.PASSWORD_MAX_LENGTH){
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"密码长度不合法");
+            throw new ErrorParamException("密码长度必须在5~20位之间！");
         }
 
         // 4.查找手机号是否存在，来判断用户是否注册过
         Long count = getBaseMapper().selectCount(Wrappers.<User>lambdaQuery().eq(User::getPhone, phone));
         if (count > 0) {
             // 说明手机号已注册过
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"该手机号已经注册过");
+            throw new ErrorParamException("手机号已经注册！");
         }
 
         // 5.注册用户
@@ -93,20 +98,20 @@ public class UserLoginServiceImpl extends ServiceImpl<UserLoginMapper, User> imp
         log.info("用户登录: {}",dto);
         // 1.参数校验
         if (dto == null || dto.getPhone().isEmpty() || dto.getPassword().isEmpty()) {
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"注册信息不能为空");
+            throw new NullParamException("登录信息不能为空！");
         }
 
         // 2.检验手机号是否有效
         String phone = dto.getPhone();
         if (!Validator.isMatchRegex(UserConstant.PHONE_REGEX,phone)){
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"手机号不合法");
+            throw new ErrorParamException("手机号不合法！");
         }
 
         // 3.检验密码的长度
         String password = dto.getPassword();
         int len = password.length();
         if(len < UserConstant.PASSWORD_MIN_LENGTH || len > UserConstant.PASSWORD_MAX_LENGTH){
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID,"密码长度不合法");
+            throw new ErrorParamException("密码错误！");
         }
 
         // 4.在数据库中查询用户
@@ -114,13 +119,13 @@ public class UserLoginServiceImpl extends ServiceImpl<UserLoginMapper, User> imp
                 .eq(User::getPhone, phone)
         );
         if (user == null) {
-            return ResponseResult.errorResult(AppHttpCodeEnum.DATA_NOT_EXIST,"该用户不存在，请先注册");
+            throw new UserNotExitedException();
         }
 
         // 5.校验密码
         String passwordWithMD5 = DigestUtils.md5DigestAsHex((password + user.getSalt()).getBytes());
         if (!passwordWithMD5.equals(user.getPassword())) {
-            return ResponseResult.errorResult(AppHttpCodeEnum.LOGIN_PASSWORD_ERROR,"密码错误");
+            throw new PasswordErrorException();
         }
 
         // 6.生成 token 32 位的随机字符串
@@ -133,10 +138,14 @@ public class UserLoginServiceImpl extends ServiceImpl<UserLoginMapper, User> imp
         stringRedisTemplate.opsForValue().set(
                 UserConstant.REDIS_LOGIN_TOKEN + token,// key
                 user.getId().toString(), // value
-                UserConstant.LOGIN_USER_TTL // ttl
+                UserConstant.LOGIN_USER_TTL, // ttl
+                TimeUnit.SECONDS // 时间单位
         );
 
-        // 8.返回 token
-        return ResponseResult.successResult(token);
+        // 8.封装 vo
+        UserLoginVO vo = new UserLoginVO(token, user.getId().toString());
+
+        // 9.返回 vo
+        return ResponseResult.successResult(vo);
     }
 }
