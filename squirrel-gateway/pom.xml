@@ -22,6 +22,12 @@
     </properties>
 
     <dependencies>
+        <!-- common 模块 -->
+        <dependency>
+            <groupId>com.squirrel</groupId>
+            <artifactId>squirrel-common</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!-- spring gateway 依赖 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -38,6 +44,12 @@
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
+        <!-- redis 依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
     </dependencies>
 </project>

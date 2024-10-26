@@ -1,16 +1,16 @@
 server:
-  port: 51003
+  port: 51601
 spring:
   application:
-    name: squirrel-user
+    name: squirrel-app-gateway
   profiles:
     active: dev
   cloud:
     nacos:
       discovery:
-        server-addr: 139.159.224.143:8081
+        server-addr: 192.168.183.131:80
         namespace: 49265754-28eb-48b8-996b-c62f24c6e565
       config:
-        server-addr: 139.159.224.143:8081
+        server-addr: 192.168.183.131:80
         namespace: 49265754-28eb-48b8-996b-c62f24c6e565
         file-extension: yml

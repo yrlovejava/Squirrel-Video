@@ -8,9 +8,9 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 192.168.183.131:80
-        namespace: b7a7a6fe-afe6-4795-b202-f2d40e0493fe
+        server-addr: 139.159.224.143:8081
+        namespace: 49265754-28eb-48b8-996b-c62f24c6e565
       config:
-        server-addr: 192.168.183.131:80
-        namespace: b7a7a6fe-afe6-4795-b202-f2d40e0493fe
+        server-addr: 139.159.224.143:8081
+        namespace: 49265754-28eb-48b8-996b-c62f24c6e565
         file-extension: yml

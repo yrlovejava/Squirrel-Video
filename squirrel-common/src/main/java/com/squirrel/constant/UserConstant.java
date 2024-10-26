@@ -1,0 +1,42 @@
+package com.squirrel.constant;
+
+/**
+ * 用户常量类
+ */
+public class UserConstant {
+
+    /**
+     * 用户密码的最小长度
+     */
+    public static final int PASSWORD_MIN_LENGTH = 6;
+
+    /**
+     * 用户密码的最大长度
+     */
+    public static final int PASSWORD_MAX_LENGTH = 20;
+
+    /**
+     * 手机号的正则表达式
+     */
+    public static final String PHONE_REGEX = "^(13[0-9]|14[5|7]|15[0|1|2|3|4|5|6|7|8|9]|18[0|1|2|3|5|6|7|8|9])\\d{8}$";
+
+    /**
+     * 默认用户名的前缀
+     */
+    public static final String DEFAULT_USER_NAME_PRE = "squirrel_";
+
+    /**
+     * 默认用户头像
+     */
+    public static final String DEFAULT_USER_IMAGE = "";
+
+    /**
+     * 用户登录 token 的 redis 前缀
+     */
+    public static final String REDIS_LOGIN_TOKEN = "user:login:token:";
+
+    /**
+     * 用户登录 token 的 redis 过期时间
+     */
+    public static final long LOGIN_USER_TTL = 2 * 60 * 60L;
+}

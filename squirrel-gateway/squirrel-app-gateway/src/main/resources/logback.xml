@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <!-- 配置日志存储路径 在当前项目根目录下创建-->
-    <property name="PATH" value="project-log/squirrel/squirrel-user"/>
+    <property name="PATH" value="project-log/squirrel/squirrel-app-gateway"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %blue(%-50logger{50}:%-4line) %msg%n</Pattern>
-<!--            <Pattern>%d{ss.SSS} %highlight(%-5level) %blue(%-30logger{30}:%-4line) %green(%-8X{UUID}) %msg%n</Pattern>-->
+            <!--            <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %blue(%-50logger{50}:%-4line) %msg%n</Pattern>-->
+            <Pattern>%d{ss.SSS} %highlight(%-5level) %blue(%-30logger{30}:%-4line) %green(%-8X{UUID}) %msg%n</Pattern>
         </encoder>
     </appender>
 
