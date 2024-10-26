@@ -8,6 +8,8 @@ import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.RequestPath;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -35,11 +37,17 @@ public class LoginFilter implements GlobalFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         RequestPath path = exchange.getRequest().getPath();
-        // 如果是登录请求 或者 注册请求，直接放行
-        if(path.toString().contains("/login") || path.toString().contains("/register")) {
+        // 1.获取 request 和 response 对象
+        ServerHttpRequest request = exchange.getRequest();
+        ServerHttpResponse response = exchange.getResponse();
+
+        // 2.如果是登录请求 或者 注册请求，直接放行
+        // register 请求是 user/login/register
+        if(request.getURI().getPath().contains("/login")) {
             return chain.filter(exchange);
         }
-        // 如果是其他请求，判断是否已经登录
+
+        // 3.如果是其他请求，判断是否已经登录
         String token = exchange.getRequest().getQueryParams().getFirst("token");
         String userId = stringRedisTemplate.opsForValue().get(UserConstant.REDIS_LOGIN_TOKEN + token);
         if(userId == null) {
@@ -50,10 +58,18 @@ public class LoginFilter implements GlobalFilter {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
-        // 如果已经登录
-        // 刷新 token 有效期
+
+        // 4.如果已经登录
+        // 4.1刷新 token 有效期
         stringRedisTemplate.opsForValue().set(UserConstant.REDIS_LOGIN_TOKEN + token,userId,UserConstant.LOGIN_USER_TTL, TimeUnit.SECONDS);
-        // 放行
+        // 4.2存储在 header 中
+        ServerHttpRequest serverHttpRequest = request.mutate().headers(h -> {
+            h.add("userId", userId);
+        }).build();
+        // 4.3重置请求
+        exchange.mutate().request(serverHttpRequest);
+
+        // 5.放行
         return chain.filter(exchange);
     }
 }
