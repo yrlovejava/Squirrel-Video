@@ -48,7 +48,8 @@ public class LoginFilter implements GlobalFilter {
         }
 
         // 3.如果是其他请求，判断是否已经登录
-        String token = exchange.getRequest().getQueryParams().getFirst("token");
+        System.out.println(request.getHeaders());
+        String token = request.getHeaders().getFirst("token");
         String userId = stringRedisTemplate.opsForValue().get(UserConstant.REDIS_LOGIN_TOKEN + token);
         if(userId == null) {
             // 未登录
@@ -56,7 +57,7 @@ public class LoginFilter implements GlobalFilter {
             log.info("拦截到未登录的请求:{}",path);
             // 返回错误状态码
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete();
+            return response.setComplete();
         }
 
         // 4.如果已经登录
