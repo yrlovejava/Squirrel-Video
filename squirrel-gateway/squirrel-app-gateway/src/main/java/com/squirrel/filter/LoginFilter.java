@@ -48,7 +48,6 @@ public class LoginFilter implements GlobalFilter {
         }
 
         // 3.如果是其他请求，判断是否已经登录
-        System.out.println(request.getHeaders());
         String token = request.getHeaders().getFirst("token");
         String userId = stringRedisTemplate.opsForValue().get(UserConstant.REDIS_LOGIN_TOKEN + token);
         if(userId == null) {
