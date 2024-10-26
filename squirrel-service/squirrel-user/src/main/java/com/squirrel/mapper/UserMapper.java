@@ -5,8 +5,8 @@ import com.squirrel.model.user.pojos.User;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
- * 用户登录 mapper
+ * 用户 mapper
  */
 @Mapper
-public interface UserLoginMapper extends BaseMapper<User> {
+public interface UserMapper extends BaseMapper<User> {
 }

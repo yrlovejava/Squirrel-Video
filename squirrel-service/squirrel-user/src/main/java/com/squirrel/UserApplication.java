@@ -17,6 +17,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableFeignClients
 public class UserApplication {
 
+    static {
+        System.setProperty("druid.mysql.usePingMethod","false");
+    }
+
     public static void main(String[] args) {
         SpringApplication.run(UserApplication.class, args);
     }
