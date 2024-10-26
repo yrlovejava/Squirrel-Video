@@ -1,6 +1,7 @@
 package com.squirrel.model.common.dtos;
 
 import com.squirrel.enums.AppHttpCodeEnum;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,20 +11,17 @@ import java.io.Serializable;
  * 通用的结果返回类
  * @param <T> 泛型
  */
+@Data
 public class ResponseResult<T> implements Serializable {
 
     /**
      * 服务器地址
      */
-    @Getter
-    @Setter
     private String host;
 
     /**
      * 状态码
      */
-    @Setter
-    @Getter
     private Integer code;
 
     /**
@@ -34,8 +32,6 @@ public class ResponseResult<T> implements Serializable {
     /**
      * 额外的数据
      */
-    @Setter
-    @Getter
     private T data;
 
     /**
@@ -68,8 +64,10 @@ public class ResponseResult<T> implements Serializable {
      * @return ResponseResult
      */
     public static ResponseResult errorResult(int code, String msg) {
-        ResponseResult result = new ResponseResult();
-        return result.error(code, msg);
+        ResponseResult responseResult = new ResponseResult<>();
+        responseResult.message = msg;
+        responseResult.code = 1;
+        return responseResult;
     }
 
     /**
@@ -83,12 +81,21 @@ public class ResponseResult<T> implements Serializable {
         return result.success(code,null,msg);
     }
 
-    public static ResponseResult successResult(Object data) {
-        ResponseResult result = setAppHttpCodeEnum(AppHttpCodeEnum.SUCCESS, AppHttpCodeEnum.SUCCESS.getErrorMessage());
-        if(data!=null) {
-            result.setData(data);
-        }
-        return result;
+    /**
+     * 成功 不返回数据
+     * @return Result
+     */
+    public static ResponseResult successResult() {
+        ResponseResult responseResult = new ResponseResult<>();
+        responseResult.code = 2;
+        return responseResult;
+    }
+
+    public static <T> ResponseResult<T> successResult(T data) {
+        ResponseResult<T> responseResult = new ResponseResult<T>();
+        responseResult.data = data;
+        responseResult.code = 2;
+        return responseResult;
     }
 
     public static ResponseResult errorResult(AppHttpCodeEnum enums){

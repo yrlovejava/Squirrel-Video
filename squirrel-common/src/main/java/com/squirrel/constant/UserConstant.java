@@ -31,6 +31,11 @@ public class UserConstant {
     public static final String DEFAULT_USER_IMAGE = "";
 
     /**
+     * 默认用户个性签名
+     */
+    public static final String DEFAULT_USER_SIGNATURE = "这个人很懒，什么都没有留下";
+
+    /**
      * 用户登录 token 的 redis 前缀
      */
     public static final String REDIS_LOGIN_TOKEN = "user:login:token:";

@@ -3,10 +3,10 @@ package com.squirrel.model.user.dtos;
 import lombok.Data;
 
 /**
- * 登录 DTO
+ * 注册的 DTO
  */
 @Data
-public class LoginDTO {
+public class RegisterDTO {
 
     /**
      * 手机号
