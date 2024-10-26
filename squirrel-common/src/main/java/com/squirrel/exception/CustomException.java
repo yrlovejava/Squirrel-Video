@@ -1,6 +1,5 @@
 package com.squirrel.exception;
 
-import com.squirrel.enums.AppHttpCodeEnum;
 import lombok.Getter;
 
 /**
@@ -9,13 +8,8 @@ import lombok.Getter;
 @Getter
 public class CustomException extends RuntimeException{
 
-    /**
-     * http 状态码
-     */
-    private final AppHttpCodeEnum appHttpCodeEnum;
-
-    public CustomException(AppHttpCodeEnum appHttpCodeEnum) {
-        this.appHttpCodeEnum = appHttpCodeEnum;
+    public CustomException(String msg){
+        super(msg);
     }
 
 }

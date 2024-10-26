@@ -1,7 +1,7 @@
 package com.squirrel.exception;
 
-import com.squirrel.enums.AppHttpCodeEnum;
-import com.squirrel.model.common.dtos.ResponseResult;
+import com.squirrel.constant.ResponseConstant;
+import com.squirrel.model.response.ResponseResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,7 +23,7 @@ public class ExceptionCatch {
     @ExceptionHandler(Exception.class)
     public ResponseResult exception(Exception e) {
         log.error("catch exception:{}",e.getMessage());
-        return ResponseResult.errorResult(AppHttpCodeEnum.SERVER_ERROR);
+        return ResponseResult.errorResult(ResponseConstant.SERVER_ERROR);
     }
 
     /**
@@ -35,6 +35,6 @@ public class ExceptionCatch {
     @ExceptionHandler(CustomException.class)
     public ResponseResult exception(CustomException e){
         log.error("catch exception:{}",e.toString());
-        return ResponseResult.errorResult(e.getAppHttpCodeEnum());
+        return ResponseResult.errorResult(e.getMessage());
     }
 }
