@@ -1,0 +1,24 @@
+spring:
+  main:
+    allow-circular-references: true
+  datasource:
+    driver-class-name: ${squirrel.datasource.driver-class-name}
+    url: jdbc:mysql://${squirrel.datasource.host}:${squirrel.datasource.port}/${squirrel.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${squirrel.datasource.username}
+    password: ${squirrel.datasource.password}
+  redis:
+    host: ${squirrel.redis.host}
+    port: ${squirrel.redis.port}
+    password: ${squirrel.redis.password}
+    database: ${squirrel.redis.database}
+# 配置mybatis
+mybatis:
+  #mapper配置文件
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: ${squirrel.mybatis.type-aliases-package}
+  configuration:
+    #开启驼峰命名
+    map-underscore-to-camel-case: true
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #标准输出
