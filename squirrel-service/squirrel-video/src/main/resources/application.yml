@@ -11,6 +11,10 @@ spring:
     port: ${squirrel.redis.port}
     password: ${squirrel.redis.password}
     database: ${squirrel.redis.database}
+  servlet:
+    multipart:
+      max-file-size: ${squirrel.servlet.multipart.max-file-size}
+      max-request-size: ${squirrel.servlet.multipart.max-request-size}
 # 配置mybatis
 mybatis:
   #mapper配置文件
