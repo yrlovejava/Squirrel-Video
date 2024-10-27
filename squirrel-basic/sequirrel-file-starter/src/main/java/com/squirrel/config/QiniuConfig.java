@@ -1,11 +1,8 @@
 package com.squirrel.config;
 
-import com.qiniu.common.Zone;
-import com.qiniu.storage.UploadManager;
 import com.squirrel.service.FileStorageService;
 import lombok.Data;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

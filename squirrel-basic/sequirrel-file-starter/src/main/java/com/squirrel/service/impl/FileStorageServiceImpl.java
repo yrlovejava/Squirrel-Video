@@ -8,7 +8,6 @@ import com.qiniu.storage.Configuration;
 import com.qiniu.storage.UploadManager;
 import com.qiniu.storage.model.DefaultPutRet;
 import com.qiniu.util.Auth;
-import com.squirrel.config.QiniuConfig;
 import com.squirrel.config.QiniuConfigProperties;
 import com.squirrel.service.FileStorageService;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,7 @@ import java.io.ByteArrayInputStream;
 public class FileStorageServiceImpl implements FileStorageService {
 
     @Resource
-    private QiniuConfig qiniuConfig;
+    private QiniuConfigProperties qiniuConfigProperties;
 
     private final static String separator = "/";
 
@@ -43,13 +42,13 @@ public class FileStorageServiceImpl implements FileStorageService {
         UploadManager manager = new UploadManager(configuration);
         // 生成上传凭证，然后准备上传
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
-        Auth auth = Auth.create(qiniuConfig.getAccessKey(), qiniuConfig.getSecretKey());
-        String upToken = auth.uploadToken(qiniuConfig.getBucket());
+        Auth auth = Auth.create(qiniuConfigProperties.getAccessKey(), qiniuConfigProperties.getSecretKey());
+        String upToken = auth.uploadToken(qiniuConfigProperties.getBucket());
         try{
             Response response = manager.put(byteArrayInputStream, objectName, upToken, null, null);
             // 解析上传成功的结果
             DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
-            filePath = qiniuConfig.getCDN() + separator + putRet.key;
+            filePath = qiniuConfigProperties.getCDN() + separator + putRet.key;
         }catch (QiniuException ex){
             log.error("{} 七牛云上传失败:{}",objectName,ex.getMessage());
         }
