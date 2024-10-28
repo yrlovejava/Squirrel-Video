@@ -13,6 +13,7 @@ import com.squirrel.model.video.pojos.Video;
 import com.squirrel.model.video.vos.VideoUploadVO;
 import com.squirrel.service.FileStorageService;
 import com.squirrel.service.VideoUploadService;
+import com.squirrel.utils.FileUtil;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -122,8 +123,7 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
     private String getFileName(MultipartFile file) {
         // 获取原始文件名
         String originalFilename = file.getOriginalFilename();
-        // 获取原始文件的后缀
-        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        return UUID.randomUUID() + extension;
+        assert originalFilename != null;
+        return FileUtil.getObjectName(originalFilename);
     }
 }
