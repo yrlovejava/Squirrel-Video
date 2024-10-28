@@ -1,5 +1,6 @@
 package com.squirrel.service.impl;
 
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.squirrel.clients.IFollowClient;
@@ -21,11 +22,15 @@ import com.squirrel.service.PrivateMessageService;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 私信服务接口实现类
@@ -40,12 +45,17 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
     @Resource
     private IUserClient userClient;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
     /**
      * 发送私信
+     * 未优化之前 响应时间 1.59s
      * @param dto 发送私信 dto
      * @return ResponseResult 发送结果
      */
     @Override
+    @Transactional
     public ResponseResult send(MessageSendDTO dto) {
         // 1.校验参数
         if (dto == null || dto.getReceiverId() == null || dto.getContent() == null) {
@@ -64,7 +74,7 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         }
 
         // 3.检查是否互相关注
-        // TODO: 从数据查询效率很低，这里需要优化
+        // TODO: 调用远程接口从数据查询效率很低，这里需要优化
         FollowEachOtherDTO followEachOtherDTO = new FollowEachOtherDTO();
         followEachOtherDTO.setFirstUserId(userId);
         followEachOtherDTO.setSecondUserId(dto.getReceiverId());
@@ -104,14 +114,43 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
             throw new DbOperationException("私信保存失败");
         }
 
-        // TODO: 保存在redis中
+        // 6.将私信转换为 vo
+        // 6.1获取发送者信息
+        UserPersonInfoBO senderInfo = getUserPersonInfo(userId);
+        // 6.2获取接收者信息
+        UserPersonInfoBO receiverInfo = getUserPersonInfo(dto.getReceiverId());
+        // 6.3封装私信 vo
+        MessageVO messageVO = MessageVO.builder()
+                .messageId(privateMessage.getId())
+                .messageContent(privateMessage.getMessageContent())
+                .sender(senderInfo)
+                .receiver(receiverInfo)
+                .createTime(privateMessage.getCreateTime())
+                .build();
 
-        // 6.返回成功
+        // 7.向redis中添加私信
+        // 7.1获取key "private_message【小id】-【大id】"
+        String messageKey = InteractConstant.REDIS_PRIVATE_MESSAGE_KEY + Math.min(userId,dto.getReceiverId()) + "-" + Math.max(userId,dto.getReceiverId()) + ":";
+        // 7.2添加私信 lPush保证顺序
+        stringRedisTemplate.opsForList().leftPush(messageKey, JSON.toJSONString(messageVO));
+        // 7.3设置过期时间为1周
+        stringRedisTemplate.expire(messageKey,7, TimeUnit.DAYS);
+        // 7.4检查私信数量是否超过30条，超过则删除最早的一条
+        Long size = stringRedisTemplate.opsForList().size(messageKey);
+        if (size == null || size > InteractConstant.REDIS_PRIVATE_MESSAGE_MAX_COUNT) {
+            // 从右边弹出一条即可
+            stringRedisTemplate.opsForList().rightPop(messageKey);
+        }
+
+        // 8.返回成功
         return ResponseResult.successResult();
     }
 
     /**
      * 私信列表
+     * 未使用 redis 存储私信，响应时间 1.42 s
+     * 使用 redis 存储 响应时间 59 ms
+     * redis 中没有数据的时候 从数据库加载 响应时间 1.69 s
      * @param dto 查询私信列表 dto
      * @return ResponseResult 私信列表
      */
@@ -121,6 +160,10 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         if (dto == null || dto.getFriendId() == null) {
             throw new NullParamException();
         }
+        Long lastMessageId = dto.getLastMessageId();
+        if (lastMessageId == null) {
+            lastMessageId = 0L;
+        }
 
         // 2.获取发送者id，也就是当前用户id
         Long userId = ThreadLocalUtil.getUserId();
@@ -129,20 +172,48 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
             throw new UserNotLoginException();
         }
 
-        // 3.查询数据库，返回私信列表
-        // TODO: 在redis中保存
-        return getMessagesInDb(userId, dto.getFriendId(), dto.getLastMessageId());
+        // 3.从redis中查询私信
+        // 3.1生成key "private_message【小id】-【大id】"
+        String messageKey = InteractConstant.REDIS_PRIVATE_MESSAGE_KEY + Math.min(userId,dto.getFriendId()) + "-" + Math.max(userId, dto.getFriendId()) + ":";
+        // 3.2从redis中查询所有私信
+        List<String> messageList = stringRedisTemplate.opsForList().range(messageKey, 0, -1);
+        if (messageList == null || messageList.isEmpty()) {
+            // 如果redis中没有，查询数据库，并写入redis
+            return getMessagesInDb(userId,
+                    dto.getFriendId(),
+                    dto.getLastMessageId(),
+                    messageKey);
+        }
+        // 3.3将私信封装为 vo
+        List<MessageVO> messageVOList = messageList.stream()
+                .map(m -> JSON.parseObject(m, MessageVO.class))
+                .collect(Collectors.toList());
+
+        // 4.更新lastMessageId
+        int total = messageVOList.size();
+        lastMessageId = messageVOList.get(total - 1).getMessageId();
+
+        // 5.封装私信列表 vo
+        MessageListVO messageListVO = MessageListVO.builder()
+                .total(total)
+                .lastMessageId(lastMessageId)
+                .messages(messageVOList)
+                .build();
+
+        // 6.返回私信列表 vo
+        return ResponseResult.successResult(messageListVO);
     }
 
     /**
-     * 从数据库查询失败
+     * 从数据库查询私信列表，并保存到redis
      * @param userId 用户id
      * @param friendId 好友id
      * @param lastMessageId 最后一条私信id
+     * @param messageKey redis中私信的key
      * @return ResponseResult
      */
     private ResponseResult<MessageListVO> getMessagesInDb(Long userId,Long friendId,
-                                                          Long lastMessageId) {
+                                                          Long lastMessageId,String messageKey) {
         // 1.从数据库中查询私信
         List<PrivateMessage> privateMessageList = getBaseMapper().selectByUserIdAndFriendId(userId, friendId, lastMessageId);
 
@@ -178,7 +249,16 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
                 .lastMessageId(lastMessageId)
                 .build();
 
-        // 5.返回私信列表 vo
+        // 6.在redis中保存
+        // 6.1因为现在是从数据查询的时候id降序排列，所以保存到redis的时候需要从右边插入
+        List<String> redisMessageList = messageVOList.stream()
+                .map(JSON::toJSONString)
+                .collect(Collectors.toList());
+        stringRedisTemplate.opsForList().rightPushAll(messageKey,redisMessageList);
+        // 6.2设置过期时间
+        stringRedisTemplate.expire(messageKey,7, TimeUnit.DAYS);
+
+        // 7.返回私信列表 vo
         return ResponseResult.successResult(messageListVO);
     }
 
