@@ -25,8 +25,7 @@ public class MessageListVO {
     /**
      * 最后一条私信id
      */
-    @IdEncrypt
-    private Long lastMessageId;
+    private String lastMessageId;
 
     /**
      * 私信列表

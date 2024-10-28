@@ -19,10 +19,10 @@ public interface UserInfoService {
 
     /**
      * 更新用户个人信息
-     * @param dto 用户个人信息
+     * @param bo 用户个人信息
      * @return 更新结果
      */
-    ResponseResult updateUserPersonInfo(UserPersonInfoBO dto);
+    ResponseResult updateUserPersonInfo(UserPersonInfoBO bo);
 
     /**
      * 上传用户头像

@@ -75,30 +75,42 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     /**
      * 更新用户个人信息
-     * @param dto 用户个人信息
+     * @param bo 用户个人信息
      * @return ResponseResult
      */
     @Override
-    public ResponseResult updateUserPersonInfo(UserPersonInfoBO dto) {
+    public ResponseResult updateUserPersonInfo(UserPersonInfoBO bo) {
         // 1.校验参数
-        if (dto == null) {
+        if (bo == null || bo.getSignature() == null || bo.getImage() == null || bo.getUsername() == null) {
             throw new NullParamException();
+        }
+        if (bo.getUsername().length() > 15){
+            throw new ErrorParamException("用户名不能超过15个字符！");
+        }
+        if (bo.getSignature().length() > 100){
+            throw new ErrorParamException("签名不能超过100个字符！");
         }
 
         // 2.获取用户的id
-        if (dto.getId() == null){
+        if (bo.getId() == null){
             Long userId = ThreadLocalUtil.getUserId();
             if (userId == null) {
                 throw new UserNotLoginException();
             }
-            dto.setId(userId);
+            bo.setId(userId);
         }
-        log.info("用户个人信息更新: {}",dto.getId());
+        log.info("用户个人信息更新: {}",bo.getId());
 
         // 3.属性拷贝
         User user = new User();
-        BeanUtils.copyProperties(dto,user);
-        userMapper.updateById(user);
+        BeanUtils.copyProperties(bo,user);
+        try {
+            userMapper.updateById(user);
+        }catch (Exception e){
+            log.error("用户信息更新失败: {}", e.toString());
+            throw new ErrorParamException("用户不存在！");
+        }
+
 
         // 4.返回成功
         return ResponseResult.successResult();

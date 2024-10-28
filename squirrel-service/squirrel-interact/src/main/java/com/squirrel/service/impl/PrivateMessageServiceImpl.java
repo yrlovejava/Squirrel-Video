@@ -58,12 +58,16 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
     @Transactional
     public ResponseResult send(MessageSendDTO dto) {
         // 1.校验参数
-        if (dto == null || dto.getReceiverId() == null || dto.getContent() == null) {
+        if (dto == null || dto.getReceiverId() == null || dto.getContent() == null || dto.getStatus() == null) {
             throw new NullParamException();
         }
         // 1.2校验私信长度
         if (dto.getContent().length() > InteractConstant.MESSAGE_MAX_LENGTH) {
             throw new ErrorParamException("私信内容不能超过" + InteractConstant.MESSAGE_MAX_LENGTH + "个字符");
+        }
+        // 1.3校验私信类型
+        if (dto.getStatus() != 0 && dto.getStatus() != 1) {
+            throw new ErrorParamException("私信类型错误！");
         }
 
         // 2.获取发送者id，也就是当前用户id
@@ -84,9 +88,13 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         }
         boolean isFollowEachOther = responseResult.getData();
 
-        // 4.如果未互相关注最多只能发送三条私信
+        // 4.如果未互相关注最多只能发送三条私信，未关注不能分享视频
         if (!isFollowEachOther){
-            // 4.1查询私信条数
+            // 4.1 判断是否是视频
+            if (dto.getStatus().equals(InteractConstant.TYPE_FRIEND_SHARE)){
+                throw new ErrorParamException("未相互关注用户不能分享视频！");
+            }
+            // 4.2查询私信条数
             Long count = getBaseMapper().selectCount(Wrappers.<PrivateMessage>lambdaQuery()
                     .eq(PrivateMessage::getReceiverId, dto.getReceiverId())
                     .eq(PrivateMessage::getSenderId, userId)
@@ -103,7 +111,7 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
                 .senderId(userId) //发送者id
                 .receiverId(dto.getReceiverId()) // 接收者id
                 .messageType(InteractConstant.TYPE_DETAIL) //私信类型
-                .status(InteractConstant.STATUS_NORMAL) // 私信状态
+                .status(dto.getStatus()) // 私信状态
                 .messageContent(dto.getContent())
                 .build();
         // 5.2保存在数据库
@@ -115,17 +123,13 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         }
 
         // 6.将私信转换为 vo
-        // 6.1获取发送者信息
-        UserPersonInfoBO senderInfo = getUserPersonInfo(userId);
-        // 6.2获取接收者信息
-        UserPersonInfoBO receiverInfo = getUserPersonInfo(dto.getReceiverId());
-        // 6.3封装私信 vo
         MessageVO messageVO = MessageVO.builder()
-                .messageId(privateMessage.getId())
+                .messageId(privateMessage.getId().toString())
                 .messageContent(privateMessage.getMessageContent())
-                .sender(senderInfo)
-                .receiver(receiverInfo)
+                .senderId(userId.toString())
+                .receiverId(dto.getReceiverId().toString())
                 .createTime(privateMessage.getCreateTime())
+                .status(dto.getStatus())
                 .build();
 
         // 7.向redis中添加私信
@@ -160,9 +164,8 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         if (dto == null || dto.getFriendId() == null) {
             throw new NullParamException();
         }
-        Long lastMessageId = dto.getLastMessageId();
-        if (lastMessageId == null) {
-            lastMessageId = 0L;
+        if (dto.getLastMessageId() == null) {
+            dto.setLastMessageId(0L);
         }
 
         // 2.获取发送者id，也就是当前用户id
@@ -189,14 +192,11 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
                 .map(m -> JSON.parseObject(m, MessageVO.class))
                 .collect(Collectors.toList());
 
-        // 4.更新lastMessageId
+        // 4.封装私信列表 vo
         int total = messageVOList.size();
-        lastMessageId = messageVOList.get(total - 1).getMessageId();
-
-        // 5.封装私信列表 vo
         MessageListVO messageListVO = MessageListVO.builder()
                 .total(total)
-                .lastMessageId(lastMessageId)
+                .lastMessageId(messageVOList.get(total - 1).getMessageId())
                 .messages(messageVOList)
                 .build();
 
@@ -223,30 +223,24 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
             return ResponseResult.successResult(MessageListVO.builder().messages(messageVOList).build());
         }
         for (PrivateMessage privateMessage : privateMessageList) {
-            // 2.1获取发送者信息
-            UserPersonInfoBO senderInfo = this.getUserPersonInfo(userId);
-            // 2.2获取接收者消息
-            UserPersonInfoBO receiverInfo = this.getUserPersonInfo(friendId);
-            // 2.3封装私信 vo
+            // 封装私信 vo
             MessageVO messageVO = MessageVO.builder()
-                    .messageId(privateMessage.getId())
+                    .messageId(privateMessage.getId().toString())
                     .messageContent(privateMessage.getMessageContent())
-                    .sender(senderInfo)
-                    .receiver(receiverInfo)
+                    .senderId(userId.toString())
+                    .receiverId(friendId.toString())
                     .createTime(privateMessage.getCreateTime())
+                    .status(privateMessage.getStatus())
                     .build();
             messageVOList.add(messageVO);
         }
 
-        // 3.更新最后一条私信的id
-        lastMessageId = messageVOList.get(messageVOList.size() - 1).getMessageId();
-
-        // 4.封装私信列表 vo
+        // 3.封装私信列表 vo
         int total = messageVOList.size();
         MessageListVO messageListVO = MessageListVO.builder()
                 .messages(messageVOList)
                 .total(total)
-                .lastMessageId(lastMessageId)
+                .lastMessageId(messageVOList.get(messageVOList.size() - 1).getMessageId())
                 .build();
 
         // 6.在redis中保存

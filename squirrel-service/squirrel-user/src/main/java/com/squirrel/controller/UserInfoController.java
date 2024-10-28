@@ -32,12 +32,12 @@ public class UserInfoController {
 
     /**
      * 更新用户个人信息
-     * @param dto 用户个人信息
+     * @param bo 用户个人信息
      * @return 更新结果
      */
     @PutMapping("/personal")
-    public ResponseResult updateUserPersonInfo(UserPersonInfoBO dto){
-        return userInfoService.updateUserPersonInfo(dto);
+    public ResponseResult updateUserPersonInfo(UserPersonInfoBO bo){
+        return userInfoService.updateUserPersonInfo(bo);
     }
 
     /**

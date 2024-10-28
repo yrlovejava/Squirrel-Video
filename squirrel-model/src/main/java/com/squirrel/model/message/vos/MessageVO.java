@@ -21,18 +21,17 @@ public class MessageVO {
     /**
      * 发送者
      */
-    private UserPersonInfoBO sender;
+    private String senderId;
 
     /**
      * 接收者
      */
-    private UserPersonInfoBO receiver;
+    private String receiverId;
 
     /**
      * 私信id
      */
-    @IdEncrypt
-    private Long messageId;
+    private String messageId;
 
     /**
      * 私信内容
@@ -43,4 +42,13 @@ public class MessageVO {
      * 发送时间
      */
     private LocalDateTime createTime;
+
+    /**
+     * 消息类型
+     * 0 私信
+     * 1 朋友分享
+     * 2 系统消息
+     */
+    private Integer status;
 }
+
