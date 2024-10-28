@@ -1,5 +1,6 @@
 package com.squirrel.model.message.vos;
 
+import com.squirrel.model.common.annotation.IdEncrypt;
 import com.squirrel.model.user.bos.UserPersonInfoBO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +31,7 @@ public class MessageVO {
     /**
      * 私信id
      */
+    @IdEncrypt
     private Long messageId;
 
     /**

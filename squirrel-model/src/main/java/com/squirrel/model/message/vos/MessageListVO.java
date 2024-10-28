@@ -1,5 +1,6 @@
 package com.squirrel.model.message.vos;
 
+import com.squirrel.model.common.annotation.IdEncrypt;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class MessageListVO {
     /**
      * 最后一条私信id
      */
+    @IdEncrypt
     private Long lastMessageId;
 
     /**
