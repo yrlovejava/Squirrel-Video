@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableTransactionManagement
-@EnableFeignClients
+@EnableFeignClients(basePackages = "com.squirrel.clients")
 public class UserApplication {
 
     static {

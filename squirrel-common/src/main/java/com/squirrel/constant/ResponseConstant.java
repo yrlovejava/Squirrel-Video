@@ -5,6 +5,9 @@ package com.squirrel.constant;
  */
 public class ResponseConstant {
 
+    public static final Integer SUCCESS_CODE = 2;
+    public static final Integer FAILURE_CODE = 1;
+
     public static final String SUCCESS = "操作成功";
 
     public static final String NEED_LOGIN = "需要登录后操作";

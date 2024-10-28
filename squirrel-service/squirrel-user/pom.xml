@@ -43,6 +43,19 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>
+        <!-- 自己封装的七牛云上传的 starter -->
+        <dependency>
+            <groupId>com.squirrel</groupId>
+            <artifactId>sequirrel-file-starter</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!-- feign api 模块 -->
+        <dependency>
+            <groupId>com.squirrel</groupId>
+            <artifactId>squirrel-feign-api</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 </project>
