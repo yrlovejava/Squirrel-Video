@@ -1,13 +1,11 @@
 package com.squirrel.controller;
 
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.dtos.UserPersonInfoDTO;
+import com.squirrel.model.user.bos.UserPersonInfoBO;
 import com.squirrel.model.user.vos.UserPersonInfoVO;
 import com.squirrel.service.UserInfoService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 
@@ -38,7 +36,17 @@ public class UserInfoController {
      * @return 更新结果
      */
     @PutMapping("/personal")
-    public ResponseResult updateUserPersonInfo(UserPersonInfoDTO dto){
+    public ResponseResult updateUserPersonInfo(UserPersonInfoBO dto){
         return userInfoService.updateUserPersonInfo(dto);
+    }
+
+    /**
+     * 上传用户头像
+     * @param imageFile 用户头像文件
+     * @return ResponseResult 图片地址
+     */
+    @PostMapping("/image/upload")
+    public ResponseResult<String> uploadUserImage(MultipartFile imageFile){
+        return userInfoService.uploadImage(imageFile);
     }
 }

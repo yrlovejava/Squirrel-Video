@@ -5,6 +5,7 @@ import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.squirrel.constant.UserConstant;
+import com.squirrel.constant.UserDefaultImageConstant;
 import com.squirrel.exception.ErrorParamException;
 import com.squirrel.exception.NullParamException;
 import com.squirrel.exception.PasswordErrorException;
@@ -78,7 +79,8 @@ public class UserLoginServiceImpl extends ServiceImpl<UserMapper, User> implemen
                 .phone(phone)
                 .password(passwordWithMD5)
                 .username(UserConstant.DEFAULT_USER_NAME_PRE + RandomUtil.randomString(5))
-                .image(UserConstant.DEFAULT_USER_IMAGE)
+                // 随机生成图像
+                .image(UserDefaultImageConstant.DEFAULT_USER_IMAGE_LIST[RandomUtil.randomInt(UserDefaultImageConstant.IMAGE_COUNT)])
                 .signature(UserConstant.DEFAULT_USER_SIGNATURE)
                 .build();
         // 5.4向数据库中保存数据

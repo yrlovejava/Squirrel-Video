@@ -1,8 +1,9 @@
 package com.squirrel.service;
 
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.dtos.UserPersonInfoDTO;
+import com.squirrel.model.user.bos.UserPersonInfoBO;
 import com.squirrel.model.user.vos.UserPersonInfoVO;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户信息操作接口
@@ -21,5 +22,12 @@ public interface UserInfoService {
      * @param dto 用户个人信息
      * @return 更新结果
      */
-    ResponseResult updateUserPersonInfo(UserPersonInfoDTO dto);
+    ResponseResult updateUserPersonInfo(UserPersonInfoBO dto);
+
+    /**
+     * 上传用户头像
+     * @param imageFile 用户头像文件
+     * @return ResponseResult 图片路径
+     */
+    ResponseResult<String> uploadImage(MultipartFile imageFile);
 }

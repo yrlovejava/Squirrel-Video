@@ -26,11 +26,6 @@ public class UserConstant {
     public static final String DEFAULT_USER_NAME_PRE = "squirrel_";
 
     /**
-     * 默认用户头像
-     */
-    public static final String DEFAULT_USER_IMAGE = "";
-
-    /**
      * 默认用户个性签名
      */
     public static final String DEFAULT_USER_SIGNATURE = "这个人很懒，什么都没有留下";
@@ -44,4 +39,11 @@ public class UserConstant {
      * 用户登录 token 的 redis 过期时间
      */
     public static final long LOGIN_USER_TTL = 2 * 60 * 60L;
+
+    /**
+     * 用户头像的类型
+     */
+    public static final String IMAGE_TYPE_JPG = ".jpg";
+    public static final String IMAGE_TYPE_PNG = ".png";
+    public static final String IMAGE_TYPE_JPEG = ".jpeg";
 }

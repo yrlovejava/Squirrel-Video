@@ -1,12 +1,14 @@
-package com.squirrel.model.user.dtos;
+package com.squirrel.model.user.bos;
 
+import lombok.Builder;
 import lombok.Data;
 
 /**
  * 用户个人信息
  */
 @Data
-public class UserPersonInfoDTO {
+@Builder
+public class UserPersonInfoBO {
 
     /**
      * 用户id
