@@ -66,7 +66,18 @@ public class VideoConstant {
     public static final String STRING_LIKE_KEY = "string_like:";
     public static final String STRING_COLLECT_KEY = "string_collect:";
     public static final String STRING_COMMENT_KEY = "string_comment:";
+    //=================记录=======================
     public static final Integer LIKE_TYPE = 1;
     public static final Integer COLLECT_TYPE = 2;
     public static final Integer COMMENT_TYPE = 3;
+
+    /**
+     * 存视频的链表头
+     */
+    public static final String VIDEO_LIST_KEY = "video_list:";
+
+    /**
+     * 存当前用户应该看的 listId 的键
+     */
+    public static final String NOW_LIST_ID = "now_list_id:";
 }

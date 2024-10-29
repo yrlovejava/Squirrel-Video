@@ -76,7 +76,7 @@ public class DbOpsServiceImpl implements DbOpsService {
     }
 
     /**
-     * 将数据库插入 mongoDB 中
+     * 将数据异步插入 mongoDB 中
      *
      * @param userId  用户id
      * @param videoId 视频id
@@ -120,6 +120,22 @@ public class DbOpsServiceImpl implements DbOpsService {
                 throw new IllegalStateException("Unexpected value: " + type);
         }
         mongoTemplate.save(videoLike);
+    }
+
+    /**
+     * 要是发现redis中like字段过期，则从数据库中查询数据返回，并同时把此视频所有字段刷新到redis
+     * @param videoId 视频id
+     * @return 点赞数
+     */
+    @Override
+    public Long getSumFromDB(Long videoId) {
+        // 从数据库中查询当前 video 的数据
+        Video video = videoMapper.selectById(videoId);
+        // 刷新到redis，同时刷新likes,collects,comments字段
+        stringRedisTemplate.opsForValue().set(VideoConstant.STRING_LIKE_KEY + videoId,video.getLikes().toString());
+        stringRedisTemplate.opsForValue().set(VideoConstant.STRING_COLLECT_KEY + video,video.getCollects().toString());
+        stringRedisTemplate.opsForValue().set(VideoConstant.STRING_COMMENT_KEY + video,video.getComments().toString());
+        return video.getLikes();
     }
 
     /**

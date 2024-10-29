@@ -4,6 +4,7 @@ import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.dtos.VideoPublishDTO;
 import com.squirrel.service.VideoDoLikeService;
 import com.squirrel.service.VideoUploadService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -67,6 +68,16 @@ public class VideoController {
     @PostMapping("/collect")
     public ResponseResult doCollect(Long videoId,Long authorId,int type){
         return videoDoLikeService.collect(videoId,authorId,type);
+    }
+
+    /**
+     * 获取视频，每次10个
+     * @param lastVideoId 上一次视频id
+     * @return ResponseResult
+     */
+    @GetMapping("/getVideos")
+    public ResponseResult getVideo(Integer lastVideoId){
+        return videoUploadService.videos(lastVideoId);
     }
 
 }

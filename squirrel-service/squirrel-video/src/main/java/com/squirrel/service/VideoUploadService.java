@@ -24,4 +24,11 @@ public interface VideoUploadService extends IService<Video> {
      * @return ResponseResult 上传结果
      */
     ResponseResult upload(MultipartFile file);
+
+    /**
+     * 获取视频，每次10个
+     * @param lastVideoId 上一次视频id
+     * @return ResponseResult
+     */
+    ResponseResult videos(Integer lastVideoId);
 }
