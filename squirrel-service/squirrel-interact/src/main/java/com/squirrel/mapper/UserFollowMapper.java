@@ -8,5 +8,5 @@ import org.apache.ibatis.annotations.Mapper;
  * 关注 mapper
  */
 @Mapper
-public interface FollowMapper extends BaseMapper<Follow> {
+public interface UserFollowMapper extends BaseMapper<Follow> {
 }

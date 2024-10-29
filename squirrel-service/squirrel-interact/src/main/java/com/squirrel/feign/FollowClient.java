@@ -3,7 +3,7 @@ package com.squirrel.feign;
 import com.squirrel.clients.IFollowClient;
 import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.service.FollowService;
+import com.squirrel.service.UserFollowService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,7 +16,7 @@ import javax.annotation.Resource;
 public class FollowClient implements IFollowClient {
 
     @Resource
-    private FollowService followService;
+    private UserFollowService userFollowService;
 
     /**
      * 是否相互关注
@@ -26,6 +26,6 @@ public class FollowClient implements IFollowClient {
     @Override
     @GetMapping("/azaz/follow/eachOther")
     public ResponseResult<Boolean> isFollowEachOther(FollowEachOtherDTO dto) {
-        return followService.isFollowEachOther(dto);
+        return userFollowService.isFollowEachOther(dto);
     }
 }

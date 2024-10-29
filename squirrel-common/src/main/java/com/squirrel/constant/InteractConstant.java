@@ -46,4 +46,34 @@ public class InteractConstant {
      * 私信类型：系统消息
      */
     public static final Integer TYPE_SYSTEM = 2;
+
+    /**
+     * 关注
+     */
+    public static final Integer FOLLOW_CODE = 1;
+
+    /**
+     * 取消关注
+     */
+    public static final Integer UNFOLLOW_CODE = 0;
+
+    /**
+     * 关注总数 redis key
+     */
+    public static final String REDIS_FOLLOW_NUM_KEY = "follow:num:";
+
+    /**
+     * 关注列表redis key
+     */
+    public static final String REDIS_FOLLOW_KEY = "follow:list:";
+
+    /**
+     * 关注锁 redis key
+     */
+    public static final String REDIS_LOCK_FOLLOW_KEY = "lock::follow:";
+
+    /**
+     * 互关列表redis key
+     */
+    public static final String REDIS_FRIEND_KEY = "friend:list:";
 }

@@ -70,6 +70,30 @@ public class User {
     private Integer status;
 
     /**
+     * 用户关注数
+     */
+    @TableField("attention")
+    private Integer attention;
+
+    /**
+     * 用户粉丝数
+     */
+    @TableField("followers")
+    private Integer followers;
+
+    /**
+     * 用户作品数
+     */
+    @TableField("works")
+    private Integer works;
+
+    /**
+     * 用户喜欢数
+     */
+    @TableField("likes")
+    private Integer likes;
+
+    /**
      * 创建时间
      */
     @TableField("create_time")
