@@ -56,4 +56,17 @@ public class VideoConstant {
      * 删除
      */
     public static final Integer STATUS_DELETE = 1;
+
+    //===============以videoId为key的集合====================
+    public static final String SET_LIKE_KEY = "set_like:";
+    public static final String SET_COLLECT_KEY = "set_collect:";
+    public static final String SET_COMMENT_KEY = "set_comment:";
+
+    //=================记录video的点赞数的key====================
+    public static final String STRING_LIKE_KEY = "string_like:";
+    public static final String STRING_COLLECT_KEY = "string_collect:";
+    public static final String STRING_COMMENT_KEY = "string_comment:";
+    public static final Integer LIKE_TYPE = 1;
+    public static final Integer COLLECT_TYPE = 2;
+    public static final Integer COMMENT_TYPE = 3;
 }

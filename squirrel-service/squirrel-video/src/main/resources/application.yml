@@ -11,6 +11,12 @@ spring:
     port: ${squirrel.redis.port}
     password: ${squirrel.redis.password}
     database: ${squirrel.redis.database}
+  data:
+    mongodb:
+      host: ${squirrel.mongodb.host}
+      port: ${squirrel.mongodb.port}
+      database: ${squirrel.mongodb.database}
+
   servlet:
     multipart:
       max-file-size: ${squirrel.servlet.multipart.max-file-size}

@@ -86,4 +86,22 @@ public class Video {
      */
     @TableField("update_time")
     private LocalDateTime updateTime;
+
+    /**
+     * 点赞数
+     */
+    @TableField("likes")
+    private Long likes;
+
+    /**
+     * 收藏数
+     */
+    @TableField("collects")
+    private Long collects;
+
+    /**
+     * 评论数
+     */
+    @TableField("comments")
+    private Long comments;
 }

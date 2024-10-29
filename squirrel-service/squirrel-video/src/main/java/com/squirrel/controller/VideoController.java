@@ -2,6 +2,7 @@ package com.squirrel.controller;
 
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.dtos.VideoPublishDTO;
+import com.squirrel.service.VideoDoLikeService;
 import com.squirrel.service.VideoUploadService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,6 +20,9 @@ public class VideoController {
 
     @Resource
     private VideoUploadService videoUploadService;
+
+    @Resource
+    private VideoDoLikeService videoDoLikeService;
 
     /**
      * 上传视频
@@ -39,4 +43,30 @@ public class VideoController {
     public ResponseResult upload(MultipartFile file){
         return videoUploadService.upload(file);
     }
+
+    /**
+     * 点赞操作 type 为1点赞，为0取消点赞
+     * @param videoId 视频id
+     * @param authorId 作者id
+     * @param type 操作类型
+     * @return ResponseResult 操作结果
+     */
+    @PostMapping("/doLike")
+    public ResponseResult doLike(Long videoId,Long authorId,int type){
+        return videoDoLikeService.like(videoId,authorId,type);
+    }
+
+    /**
+     * 收藏操作
+     * type 为1收藏，为0取消收藏
+     * @param videoId 视频id
+     * @param authorId 作者id
+     * @param type 操作类型
+     * @return ResponseResult 操作结果
+     */
+    @PostMapping("/collect")
+    public ResponseResult doCollect(Long videoId,Long authorId,int type){
+        return videoDoLikeService.collect(videoId,authorId,type);
+    }
+
 }
