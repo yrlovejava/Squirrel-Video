@@ -3,13 +3,11 @@ package com.squirrel.service.impl;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.squirrel.clients.IFollowClient;
 import com.squirrel.clients.IUserClient;
 import com.squirrel.constant.InteractConstant;
 import com.squirrel.constant.ResponseConstant;
 import com.squirrel.exception.*;
 import com.squirrel.mapper.PrivateMessageMapper;
-import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.message.dtos.MessageListDTO;
 import com.squirrel.model.message.dtos.MessageSendDTO;
 import com.squirrel.model.message.pojos.PrivateMessage;
@@ -40,9 +38,6 @@ import java.util.stream.Collectors;
 public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper, PrivateMessage> implements PrivateMessageService {
 
     @Resource
-    private IFollowClient followClient;
-
-    @Resource
     private IUserClient userClient;
 
     @Resource
@@ -50,7 +45,8 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
 
     /**
      * 发送私信
-     * 未优化之前 响应时间 1.59s
+     * 未优化之前 响应时间 1.59 s
+     * 使用 redis 做优化 643 ms
      * @param dto 发送私信 dto
      * @return ResponseResult 发送结果
      */
@@ -78,18 +74,13 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         }
 
         // 3.检查是否互相关注
-        // TODO: 调用远程接口从数据查询效率很低，这里需要优化
-        FollowEachOtherDTO followEachOtherDTO = new FollowEachOtherDTO();
-        followEachOtherDTO.setFirstUserId(userId);
-        followEachOtherDTO.setSecondUserId(dto.getReceiverId());
-        ResponseResult<Boolean> responseResult = followClient.isFollowEachOther(followEachOtherDTO);
-        if(!(responseResult.getCode().equals(ResponseConstant.SUCCESS_CODE))){
-            return ResponseResult.errorResult("发送消息失败，内部服务器错误");
-        }
-        boolean isFollowEachOther = responseResult.getData();
+        // 3.1获取key
+        String friendKey = InteractConstant.REDIS_FRIEND_KEY + userId;
+        // 3.1从redis中查询
+        Boolean isFollowEachOther = stringRedisTemplate.opsForSet().isMember(friendKey, dto.getReceiverId().toString());
 
         // 4.如果未互相关注最多只能发送三条私信，未关注不能分享视频
-        if (!isFollowEachOther){
+        if (Boolean.FALSE.equals(isFollowEachOther)){
             // 4.1 判断是否是视频
             if (dto.getStatus().equals(InteractConstant.TYPE_FRIEND_SHARE)){
                 throw new ErrorParamException("未相互关注用户不能分享视频！");
