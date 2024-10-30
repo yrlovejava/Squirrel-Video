@@ -8,6 +8,7 @@ import com.squirrel.constant.InteractConstant;
 import com.squirrel.constant.ResponseConstant;
 import com.squirrel.exception.*;
 import com.squirrel.mapper.PrivateMessageMapper;
+import com.squirrel.model.interact.vos.ChatListVO;
 import com.squirrel.model.message.dtos.MessageListDTO;
 import com.squirrel.model.message.dtos.MessageSendDTO;
 import com.squirrel.model.message.pojos.PrivateMessage;
@@ -53,6 +54,7 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
     @Override
     @Transactional
     public ResponseResult send(MessageSendDTO dto) {
+        log.info("发送私信: {}",dto);
         // 1.校验参数
         if (dto == null || dto.getReceiverId() == null || dto.getContent() == null || dto.getStatus() == null) {
             throw new NullParamException();
@@ -151,6 +153,7 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
      */
     @Override
     public ResponseResult<MessageListVO> messageList(MessageListDTO dto) {
+        log.info("查询私信: {}",dto);
         // 1.参数校验
         if (dto == null || dto.getFriendId() == null) {
             throw new NullParamException();
@@ -248,20 +251,11 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
     }
 
     /**
-     * 获取用户信息
-     * @param userId 用户id
-     * @return 用户信息 bo
+     * 私信列表
+     * @return ResponseResult
      */
-    private UserPersonInfoBO getUserPersonInfo(Long userId) {
-        ResponseResult<UserPersonInfoVO> userPersonInfo = userClient.getUserPersonInfo(userId);
-        if (userPersonInfo == null || !userPersonInfo.getCode().equals(ResponseConstant.SUCCESS_CODE)){
-            throw new FeignOperationException("获取用户信息的远程调用失败: " + userId);
-        }
-        UserPersonInfoVO data = userPersonInfo.getData();
-        UserPersonInfoBO userPersonInfoBO = UserPersonInfoBO.builder()
-                .id(userId)
-                .build();
-        BeanUtils.copyProperties(data,userPersonInfoBO);
-        return userPersonInfoBO;
+    @Override
+    public ResponseResult<ChatListVO> chatList() {
+        return null;
     }
 }

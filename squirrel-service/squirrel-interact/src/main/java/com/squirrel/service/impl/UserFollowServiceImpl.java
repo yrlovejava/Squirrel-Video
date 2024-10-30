@@ -2,13 +2,16 @@ package com.squirrel.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.squirrel.clients.IUserClient;
 import com.squirrel.constant.InteractConstant;
+import com.squirrel.constant.UserConstant;
 import com.squirrel.exception.*;
 import com.squirrel.mapper.UserFollowMapper;
 import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.follow.dtos.UserFollowDTO;
 import com.squirrel.model.follow.pojos.Follow;
 import com.squirrel.model.response.ResponseResult;
+import com.squirrel.model.user.vos.UserPersonInfoVO;
 import com.squirrel.service.UserFollowService;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +23,9 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 关注接口的实现类
@@ -31,6 +36,9 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private IUserClient userClient;
 
     /**
      * 关注操作的脚本
@@ -124,12 +132,14 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
         String targetFollowKey = InteractConstant.REDIS_FOLLOW_KEY + dto.getUserId();
         // 关注对象的互关列表的 key
         String targetFriendKey = InteractConstant.REDIS_FRIEND_KEY + dto.getUserId();
+        // 关注对象的粉丝数量的 key
+        String targetFanNumKey = InteractConstant.REDIS_FANS_NUM_KEY + dto.getUserId();
 
         // 4.获取到锁，执行操作
         try {
             Integer op = dto.getType();
             // 4.1封装 keys 和 values
-            List<String> keys = Arrays.asList(followKey,followNumKey,friendKey,targetFollowKey,targetFriendKey);
+            List<String> keys = Arrays.asList(followKey,followNumKey,friendKey,targetFollowKey,targetFriendKey,targetFanNumKey);
             Object[] values = new Object[]{userId.toString(),dto.getUserId().toString()};
             if (op.equals(InteractConstant.FOLLOW_CODE)){
                 // 关注操作
@@ -140,6 +150,13 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
                 // 4.2执行lua脚本
                 stringRedisTemplate.execute(UNFOLLOW_SCRIPT,keys,values);
             }
+
+            // 5.在数据库中删除
+            // TODO: 具体怎么实现数据一致性有待考虑
+            getBaseMapper().delete(Wrappers.<Follow>lambdaQuery()
+                    .eq(Follow::getUserId,userId)
+                    .eq(Follow::getFollowId,dto.getUserId())
+            );
         }catch (Exception e){
             if (e instanceof RedisSystemException){
                 throw new ErrorOperationException(e.getMessage());
@@ -149,7 +166,131 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
             }
         }
 
-        // 5.返回成功
+        // 6.返回成功
         return ResponseResult.successResult();
+    }
+
+    /**
+     * 是否关注
+     * @param firstUserId 第一个用户
+     * @param secondUserId 第二个用户
+     * @return ResponseResult 是否关注
+     */
+    @Override
+    public ResponseResult<Boolean> isFollow(Long firstUserId, Long secondUserId) {
+        // 1.参数校验
+        if(firstUserId == null || secondUserId == null){
+            throw new NullParamException();
+        }
+
+        // 2.查询是否关注
+        // 2.1获取key
+        String friendKey = InteractConstant.REDIS_FRIEND_KEY + firstUserId;
+        // 2.2查询redis
+        Boolean isFollow = stringRedisTemplate.opsForSet().isMember(friendKey, secondUserId);
+
+        // 3.返回结果
+        return ResponseResult.successResult(isFollow);
+    }
+
+    /**
+     * 获取互关朋友列表
+     * @return ResponseResult 互关朋友列表
+     */
+    @Override
+    public ResponseResult<List<UserPersonInfoVO>> getFriends() {
+        // 1.获取当前用户id
+        Long userId = ThreadLocalUtil.getUserId();
+        if (userId == null){
+            throw new UserNotLoginException();
+        }
+
+        // 2.查询互关列表
+        // 2.1获取key
+        String friendKey = InteractConstant.REDIS_FRIEND_KEY + userId;
+        // 2.2查询redis
+        Set<String> ids = stringRedisTemplate.opsForSet().members(friendKey);
+        if(ids == null || ids.isEmpty()){
+            return ResponseResult.successResult(Collections.emptyList());
+        }
+
+
+        // 3.远程调用，查询数据库
+        return userClient.getUserPersonInfos(ids);
+    }
+
+    /**
+     * 获取关注列表
+     * @return ResponseResult 关注列表
+     */
+    @Override
+    public ResponseResult<List<UserPersonInfoVO>> getFollowList() {
+        // 1.获取当前用户id
+        Long userId = ThreadLocalUtil.getUserId();
+        if (userId == null){
+            throw new UserNotLoginException();
+        }
+
+        // 2.查询互关列表
+        // 2.1获取key
+        String followKey = InteractConstant.REDIS_FOLLOW_KEY + userId;
+        // 2.2查询redis
+        Set<String> ids = stringRedisTemplate.opsForSet().members(followKey);
+        if(ids == null || ids.isEmpty()){
+            return ResponseResult.successResult(Collections.emptyList());
+        }
+
+        // 3.远程调用，查询数据库
+        return userClient.getUserPersonInfos(ids);
+    }
+
+    /**
+     * 获取关注总数
+     * @param userId 用户id
+     * @return ResponseResult 关注总数
+     */
+    @Override
+    public ResponseResult<Integer> getFollowNum(Long userId) {
+        // 1.校验参数
+        if (userId == null){
+            throw new  NullParamException();
+        }
+
+        // 2.查询关注总数
+        // 2.1获取key
+        String followNumKey = InteractConstant.REDIS_FOLLOW_NUM_KEY + userId;
+        // 2.2查询redis
+        String numStr = stringRedisTemplate.opsForValue().get(followNumKey);
+        if (numStr == null){
+            numStr = "0";
+        }
+
+        // 3.返回关注总数
+        return ResponseResult.successResult(Integer.parseInt(numStr));
+    }
+
+    /**
+     * 获取粉丝数
+     * @param userId 用户id
+     * @return ResponseResult 粉丝数
+     */
+    @Override
+    public ResponseResult<Integer> getFansNum(Long userId) {
+        // 1.校验参数
+        if (userId == null){
+            throw new  NullParamException();
+        }
+
+        // 2.查询关注总数
+        // 2.1获取key
+        String fanNumKey = InteractConstant.REDIS_FANS_NUM_KEY + userId;
+        // 2.2查询redis
+        String numStr = stringRedisTemplate.opsForValue().get(fanNumKey);
+        if (numStr == null){
+            numStr = "0";
+        }
+
+        // 3.返回关注总数
+        return ResponseResult.successResult(Integer.parseInt(numStr));
     }
 }

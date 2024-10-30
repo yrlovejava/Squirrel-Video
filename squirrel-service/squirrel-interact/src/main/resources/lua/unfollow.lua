@@ -4,6 +4,7 @@
 -- KEYS[3] 当前用户的互关集合键
 -- KEYS[4] 目标对象的关注集合键
 -- KEYS[5] 目标对象的互关集合键
+-- KEYS[6] 目标对象的粉丝数量键
 
 -- value 定义
 -- ARGV[1] 当前用户id
@@ -21,6 +22,8 @@ redis.call("decr", KEYS[2])
 if redis.call("sismember",KEYS[4],ARGV[1]) == 1 then
     redis.call("srem", KEYS[3], ARGV[2])
     redis.call("srem", KEYS[5], ARGV[1])
+    -- 对方的粉丝数减一
+    redis.call("decr",KEYS[6])
 end
 
 -- 4.将目标用户从当前用户的关注列表中删除

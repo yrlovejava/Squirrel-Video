@@ -73,7 +73,12 @@ public class InteractConstant {
     public static final String REDIS_LOCK_FOLLOW_KEY = "lock::follow:";
 
     /**
-     * 互关列表redis key
+     * 互关列表 redis key
      */
     public static final String REDIS_FRIEND_KEY = "friend:list:";
+
+    /**
+     * 粉丝总数 redis key
+     */
+    public static final String REDIS_FANS_NUM_KEY = "follow:fansNum";
 }

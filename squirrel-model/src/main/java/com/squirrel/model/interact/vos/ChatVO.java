@@ -1,4 +1,4 @@
-package com.squirrel.model.user.bos;
+package com.squirrel.model.interact.vos;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -6,31 +6,36 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 用户个人信息
+ * 聊天消息 VO
  */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserPersonInfoBO {
+public class ChatVO {
 
     /**
-     * 用户id
+     * 用户 id
      */
-    private Long id;
+    private String id;
 
     /**
-     * 用户个人信息
+     * 对方用户名
      */
     private String username;
 
     /**
-     * 用户头像
+     * 对方头像
      */
     private String image;
 
     /**
-     * 用户个性签名
+     * 对方签名
      */
     private String signature;
+
+    /**
+     * 最后一条消息内容
+     */
+    private String latestMessage;
 }

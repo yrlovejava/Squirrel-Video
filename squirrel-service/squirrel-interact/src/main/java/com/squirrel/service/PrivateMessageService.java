@@ -1,6 +1,7 @@
 package com.squirrel.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.squirrel.model.interact.vos.ChatListVO;
 import com.squirrel.model.message.dtos.MessageListDTO;
 import com.squirrel.model.message.dtos.MessageSendDTO;
 import com.squirrel.model.message.pojos.PrivateMessage;
@@ -25,4 +26,10 @@ public interface PrivateMessageService extends IService<PrivateMessage> {
      * @return ResponseResult 私信列表
      */
     ResponseResult<MessageListVO> messageList(MessageListDTO dto);
+
+    /**
+     * 私信列表
+     * @return ResponseResult
+     */
+    ResponseResult<ChatListVO> chatList();
 }

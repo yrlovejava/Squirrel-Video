@@ -1,6 +1,6 @@
 package com.squirrel.feign;
 
-import com.squirrel.clients.IFollowClient;
+import com.squirrel.clients.IInteractClient;
 import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.service.UserFollowService;
@@ -10,13 +10,33 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 
 /**
- * 关注操作远程调用接口的实现类
+ * 交互操作远程调用接口的实现类
  */
 @RestController
-public class FollowClient implements IFollowClient {
+public class InteractClient implements IInteractClient {
 
     @Resource
     private UserFollowService userFollowService;
+
+    /**
+     * 获取关注总数
+     * @param userId 用户id
+     * @return 关注总数
+     */
+    @Override
+    public ResponseResult<Integer> getFollowNum(Long userId) {
+        return null;
+    }
+
+    /**
+     * 获取粉丝总数
+     * @param userId 用户id
+     * @return 粉丝总数
+     */
+    @Override
+    public ResponseResult<Integer> getFansNum(Long userId) {
+        return null;
+    }
 
     /**
      * 是否相互关注

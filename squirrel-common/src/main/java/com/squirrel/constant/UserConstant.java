@@ -46,4 +46,14 @@ public class UserConstant {
     public static final String IMAGE_TYPE_JPG = ".jpg";
     public static final String IMAGE_TYPE_PNG = ".png";
     public static final String IMAGE_TYPE_JPEG = ".jpeg";
+
+    /**
+     * 用户简略信息的 redis 前缀
+     */
+    public static final String REDIS_USER_INFO = "user:info:";
+
+    /**
+     * 用户简略信息的 redis 过期时间
+     */
+    public static final Integer REDIS_USER_INFO_TTL = 24 * 60 * 60;
 }

@@ -1,5 +1,6 @@
 package com.squirrel.controller;
 
+import com.squirrel.model.interact.vos.ChatListVO;
 import com.squirrel.model.message.dtos.MessageListDTO;
 import com.squirrel.model.message.dtos.MessageSendDTO;
 import com.squirrel.model.message.vos.MessageListVO;
@@ -40,5 +41,14 @@ public class PrivateMessageController {
     @GetMapping("/list")
     public ResponseResult<MessageListVO> privateMessageList(MessageListDTO dto){
         return privateMessageService.messageList(dto);
+    }
+
+    /**
+     * 私信列表
+     * @return ResponseResult
+     */
+    @GetMapping("/chatList")
+    public ResponseResult<ChatListVO> chatList(){
+        return privateMessageService.chatList();
     }
 }
