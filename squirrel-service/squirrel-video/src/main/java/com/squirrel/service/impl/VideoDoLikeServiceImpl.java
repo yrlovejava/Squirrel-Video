@@ -6,9 +6,11 @@ import com.squirrel.exception.LuaExecuteException;
 import com.squirrel.exception.NullParamException;
 import com.squirrel.exception.UserNotLoginException;
 import com.squirrel.model.response.ResponseResult;
+import com.squirrel.model.video.pojos.Video;
 import com.squirrel.model.video.pojos.VideoLike;
 import com.squirrel.service.DbOpsService;
 import com.squirrel.service.VideoDoLikeService;
+import com.squirrel.service.VideoUploadService;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
@@ -20,8 +22,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * VideoDoLikeService 实现类
@@ -38,6 +39,9 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
 
     @Resource
     private MongoTemplate mongoTemplate;
+
+    @Resource
+    private VideoUploadService videoUploadService;
 
     /**
      * 点赞操作的lua脚本
@@ -105,9 +109,11 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
         if (userId == null){
             throw new UserNotLoginException();
         }
+        // 当前用户点赞的视频集合key
+        String nowUserKey = VideoConstant.USER_SET_LIKE_KEY + userId;
 
         // 封装keys
-        List<String> keys = Arrays.asList(setKey,strKey,userKey);
+        List<String> keys = Arrays.asList(setKey,strKey,userKey,nowUserKey);
         if (type == 1) {
             // 添加到 redis，以 set 方式存储，key 为 videoId，value 为userId
             // 查询用户是否点过赞
@@ -117,7 +123,7 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
                 // redis数据加一
                 try {
                     // 执行lua脚本
-                    this.stringRedisTemplate.execute(LIKE_SCRIPT,keys,userId.toString());
+                    this.stringRedisTemplate.execute(LIKE_SCRIPT,keys,userId.toString(),videoId.toString());
                 }catch (Exception e){
                     log.error("lua脚本执行失败: {}",e.toString());
                     throw new LuaExecuteException();
@@ -138,7 +144,7 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
                 // redis数据减一
                 try {
                     // 执行lua脚本
-                    this.stringRedisTemplate.execute(UNLIKE_SCRIPT,keys,userId.toString());
+                    this.stringRedisTemplate.execute(UNLIKE_SCRIPT,keys,userId.toString(),videoId.toString());
                 }catch (Exception e){
                     log.error("lua脚本执行失败: {}",e.toString());
                     throw new LuaExecuteException();
@@ -175,18 +181,20 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
         String setKey = VideoConstant.SET_COLLECT_KEY + videoId;
         // kv 类型的 key(key 为 videoId,value 为点赞总数)
         String strKey = VideoConstant.STRING_COLLECT_KEY + videoId;
-        // 视频作者的点赞总数的 key
-        String userKey=VideoConstant.USER_COLLECT_SUM+authorId;
+        // 视频作者的收藏总数的 key
+        String userKey=VideoConstant.USER_COLLECT_SUM + authorId;
 
         // 3.获取用户id
         Long userId = ThreadLocalUtil.getUserId();
         if (userId == null){
             throw new UserNotLoginException();
         }
+        // 当前用户收藏的视频集合的 key
+        String nowUserKey = VideoConstant.USER_SET_COLLECT_KEY + userId;
 
         //4.收藏操作
         // 封装keys
-        List<String> keys = Arrays.asList(setKey,strKey,userKey);
+        List<String> keys = Arrays.asList(setKey,strKey,userKey,nowUserKey);
         if(type==1){
             //添加到redis，以set方式存储，key为videoId，value为userId
             Boolean isMember = this.stringRedisTemplate.opsForSet().isMember(setKey, String.valueOf(userId));
@@ -195,14 +203,13 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
                 // redis数据加一
                 try {
                     // 执行lua脚本
-                    this.stringRedisTemplate.execute(COLLECT_SCRIPT,keys,userId.toString());
+                    this.stringRedisTemplate.execute(COLLECT_SCRIPT,keys,userId.toString(),videoId.toString());
                 }catch (Exception e){
                     log.error("lua脚本执行失败: {}",e.toString());
                     throw new LuaExecuteException();
                 }
                 //异步添加到mongodb
                 dbOpsService.insertIntoMongoDB(userId,videoId, VideoConstant.COLLECT_TYPE,1);
-
                 return ResponseResult.successResult("收藏成功");
             }
             else {
@@ -219,15 +226,13 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
                 // redis数据减一
                 try {
                     // 执行lua脚本
-                    this.stringRedisTemplate.execute(UNCOLLECT_SCRIPT,keys,userId.toString());
+                    this.stringRedisTemplate.execute(UNCOLLECT_SCRIPT,keys,userId.toString(),videoId.toString());
                 }catch (Exception e){
                     log.error("lua脚本执行失败: {}",e.toString());
                     throw new LuaExecuteException();
                 }
                 //异步更新到mongodb
                 dbOpsService.insertIntoMongoDB(userId,videoId,VideoConstant.COLLECT_TYPE,0);
-                //redis数据减一
-                dbOpsService.addIntSafely(strKey,-1);
                 return ResponseResult.successResult();
             }
             else {
@@ -283,15 +288,15 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
     }
 
     /**
-     * 获取当前用的的点赞数
-     * @return 点赞数
+     * 获取用户被的点赞数
+     * @param userId 用户id
+     * @return ResponseResult<Integer> 用户被赞数
      */
     @Override
-    public Integer getUserLikes() {
-        // 1.获取当前用户的id
-        Long userId = ThreadLocalUtil.getUserId();
+    public ResponseResult<Integer> getUserLikes(Long userId) {
+        // 1.校验参数
         if (userId == null) {
-            throw new UserNotLoginException();
+            throw new NullParamException();
         }
 
         // 2.得到对应的key
@@ -304,6 +309,123 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
         }
 
         // 4.返回点赞数
-        return Integer.parseInt(numStr);
+        return ResponseResult.successResult(Integer.parseInt(numStr));
+    }
+
+    /**
+     * 获取用户被收藏数
+     * @param userId 用户id
+     * @return ResponseResult<Integer> 用户被收藏数
+     */
+    @Override
+    public ResponseResult<Integer> getUserCollects(Long userId) {
+        // 1.校验参数
+        if (userId == null) {
+            throw  new NullParamException();
+        }
+
+        // 2.获取key
+        String userKey = VideoConstant.USER_COLLECT_SUM + userId;
+
+        // 3.从redis中查询
+        String numStr = stringRedisTemplate.opsForValue().get(userKey);
+        if (numStr == null) {
+            numStr = "0";
+        }
+
+        // 4.返回结果
+        return ResponseResult.successResult(Integer.parseInt(numStr));
+    }
+
+    /**
+     * 获取用户发布过的所有视频
+     * @param userId 用户id
+     * @return ResponseResult<List<Video>> 用户发布过的所有视频
+     */
+    @Override
+    public ResponseResult<List<Video>> getAllVideos(Long userId) {
+        // 1.参数校验
+        if (userId == null){
+            throw new NullParamException();
+        }
+
+        // 2.获取key
+        String userVideoKey = VideoConstant.USER_VIDEO_SET + userId;
+
+        // 3.查询redis
+        Set<String> videoIds = stringRedisTemplate.opsForSet().members(userVideoKey);
+        if (videoIds == null || videoIds.isEmpty()){
+            return ResponseResult.successResult(Collections.emptyList());
+        }
+
+        // 4.封装返回结果
+        List<Video> videos = new ArrayList<>();
+        for (String videoId : videoIds){
+            Video video = videoUploadService.getVideoById(Integer.parseInt(videoId));
+            if (video == null){
+                videos.add(video);
+            }
+        }
+
+        // 5.返回所有视频
+        return ResponseResult.successResult(videos);
+    }
+
+    /**
+     * 得到用户收藏过的所有视频
+     * @return ResponseResult 用户收藏过的所有视频
+     */
+    @Override
+    public ResponseResult showLikesList() {
+        // 1.获取当前用户的id
+        Long userId = ThreadLocalUtil.getUserId();
+        if (userId == null) {
+            throw new UserNotLoginException();
+        }
+
+        // 2.查询redis
+        Set<String> videoIds = stringRedisTemplate.opsForSet().members(VideoConstant.USER_SET_LIKE_KEY + userId);
+        if (videoIds == null || videoIds.isEmpty()){
+            return ResponseResult.successResult(Collections.emptyList());
+        }
+
+        // 3.获取video
+        List<Video>list=new ArrayList<>();
+        for (String videoId : videoIds) {
+            Video video = videoUploadService.getVideoById(Integer.parseInt(videoId));
+            list.add(video);
+        }
+
+        // 4.返回结果
+        return ResponseResult.successResult(list);
+    }
+
+    /**
+     * 得到用户收藏过的所有视频
+     * @return ResponseResult 收藏过的所有视频
+     */
+    @Override
+    public ResponseResult showCollectsList() {
+        // 1.获取当前用户的id
+        Long userId = ThreadLocalUtil.getUserId();
+        if (userId == null) {
+            throw new UserNotLoginException();
+        }
+
+        // 2.查询redis
+        Set<String> videoIds = stringRedisTemplate.opsForSet().members(VideoConstant.USER_SET_COLLECT_KEY + userId);
+        if (videoIds == null || videoIds.isEmpty()){
+            return ResponseResult.successResult(Collections.emptyList());
+        }
+
+        // 3.获取video
+        List<Video>list=new ArrayList<>();
+        for (String videoId : videoIds) {
+            Video video = videoUploadService.getVideoById(Integer.parseInt(videoId));
+            list.add(video);
+        }
+
+        // 4.返回结果
+        return ResponseResult.successResult(list);
     }
 }

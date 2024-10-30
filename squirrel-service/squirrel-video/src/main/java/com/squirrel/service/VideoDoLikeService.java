@@ -1,6 +1,9 @@
 package com.squirrel.service;
 
 import com.squirrel.model.response.ResponseResult;
+import com.squirrel.model.video.pojos.Video;
+
+import java.util.List;
 
 public interface VideoDoLikeService {
 
@@ -32,8 +35,35 @@ public interface VideoDoLikeService {
     ResponseResult isLike(Long videoId);
 
     /**
-     * 获取当前用户的点赞数量
+     * 获取用户被点赞数量
+     * @param userId 用户id
      * @return 点赞数量
      */
-    Integer getUserLikes();
+    ResponseResult<Integer> getUserLikes(Long userId);
+
+    /**
+     * 获取用户被收藏数
+     * @param userId 用户id
+     * @return ResponseResult<Integer> 用户被收藏数
+     */
+    ResponseResult<Integer> getUserCollects(Long userId);
+
+    /**
+     * 获取用户发布过的所有视频
+     * @param userId 用户id
+     * @return ResponseResult<List<Video>> 用户发布过的所有视频
+     */
+    ResponseResult<List<Video>> getAllVideos(Long userId);
+
+    /**
+     * 得到用户收藏过的所有视频
+     * @return ResponseResult 用户收藏过的所有视频
+     */
+    ResponseResult showLikesList();
+
+    /**
+     * 得到用户收藏过的所有视频
+     * @return ResponseResult 收藏过的所有视频
+     */
+    ResponseResult showCollectsList();
 }

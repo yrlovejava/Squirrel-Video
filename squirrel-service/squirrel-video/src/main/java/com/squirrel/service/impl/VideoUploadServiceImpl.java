@@ -153,37 +153,56 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
             throw new NullParamException();
         }
 
-        // 2.根据 listId 取出对应的视频
-        List<String> list = stringRedisTemplate.opsForList().range(VideoConstant.VIDEO_LIST_KEY + lastVideoId, 0, -1);
-        if (list == null || list.isEmpty()){
-            return ResponseResult.errorResult("到底了");
+        // 2.查询redis
+        List <Video>result=new ArrayList<>();
+        for (int i = lastVideoId*10+1; i < lastVideoId*10+11; i++) {
+            //i就是videoId
+            //得到video对象
+            result.add(getVideoById(i));
         }
-        List<Video> result = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            // 将redis中的数据反序列化为对象
-            Video video = JSON.parseObject(list.get(i), Video.class);
-            // 得到 videoId
-            Long videoId = video.getId();
-            //获取点赞数
-            String likes = stringRedisTemplate.opsForValue().get(VideoConstant.STRING_LIKE_KEY + videoId);
-            if (likes == null) {
-                // 要是发现redis中likes字段过期
-                // 则从数据库中查询数据返回，并同时把此视频所有字段刷新到redis
-                likes = dbOpsService.getSumFromDB(videoId).toString();
-            }
-            // 获取评论数
-            String collects = stringRedisTemplate.opsForValue().get(VideoConstant.STRING_COLLECT_KEY + videoId);
-            collects = collects == null ? "0" : collects;
-            // 获取收藏数
-            String comments = stringRedisTemplate.opsForValue().get(VideoConstant.STRING_COMMENT_KEY + videoId);
-            comments = comments == null ? "0" : comments;
-            // 如果当前key为空，直接从数据库中取
-            video.setLikes(Long.parseLong(likes));
-            video.setCollects(Long.parseLong(collects));
-            video.setComments(Long.parseLong(comments));
-            result.add(video);
+        if(result.isEmpty()){
+            return ResponseResult.successResult("到底了");
         }
         return ResponseResult.successResult(result);
+    }
+
+    /**
+     * 通过videoId得到video的实体类
+     * @param videoId videoId
+     * @return 视频实体类
+     */
+    @Override
+    public Video getVideoById(Integer videoId) {
+        // 1.参数校验
+        if (videoId == null) {
+            throw new NullParamException();
+        }
+
+        // 2.从redis中查询
+        // 2.1获取key
+        String videoKey = VideoConstant.VIDEO_ID + videoId;
+        // 2.2查询
+        String videoJson = stringRedisTemplate.opsForValue().get(videoKey + videoId);
+        if (videoJson == null) {
+            return null;
+        }
+
+        // 3.将redis中的json字符串反序列化为对象
+        Video video = JSON.parseObject(videoJson, Video.class);
+        // 获取点赞数，评论数，收藏数
+        String likeStr = stringRedisTemplate.opsForValue().get(VideoConstant.STRING_LIKE_KEY + videoId);
+        if (likeStr == null) {
+            // 要是发现 redis 中 like 字段过期
+            // 则从数据库中查询数据返回，并把此视频所有字段刷新到redis
+            likeStr = String.valueOf(dbOpsService.getSumFromDB(videoId.longValue()));
+        }
+        String collects = stringRedisTemplate.opsForValue().get(VideoConstant.STRING_COLLECT_KEY + videoId);
+        String comments = stringRedisTemplate.opsForValue().get(VideoConstant.STRING_COMMENT_KEY + videoId);
+        video.setLikes(Long.parseLong(likeStr));
+        video.setCollects(collects == null ? 0 : Long.parseLong(collects));
+        video.setComments(comments == null ? 0 : Long.parseLong(comments));
+
+        return video;
     }
 
     /**
