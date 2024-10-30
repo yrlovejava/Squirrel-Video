@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.squirrel.clients.IInteractClient;
+import com.squirrel.clients.IVideoClient;
 import com.squirrel.constant.UserConstant;
 import com.squirrel.exception.*;
 import com.squirrel.mapper.UserMapper;
@@ -48,6 +49,9 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Resource
     private IInteractClient interactClient;
+
+    @Resource
+    private IVideoClient videoClient;
 
     /**
      * 获取用户个人信息
@@ -264,21 +268,28 @@ public class UserInfoServiceImpl implements UserInfoService {
             throw new UserNotExitedException();
         }
         UserPersonInfoVO userPersonInfoVO = userPersonalInfoVoResponseResult.getData();
-        // 3. 获取关注数
+        // 3.1 获取关注数
         Integer followNum = interactClient.getFollowNum(userId).getData();
-        // 4. 获取粉丝数
+        // 3.2 获取粉丝数
         Integer fansNum = interactClient.getFansNum(userId).getData();
-        // TODO 获取被点赞数以及作品数，还是是否关注
+        // 3.3 获取点赞数和作品数
+        Integer workNums = videoClient.getUserLikes(userId).getData();
+        Integer likeNums = videoClient.getUserWorks(userId).getData();
+        // 3.4 获取是否关注
+        Long curUserId = ThreadLocalUtil.getUserId();
+        Boolean isFollow = interactClient.isFollow(curUserId, userId).getData();
 
-        // 5.封装vo
+        // 4.封装vo
         UserHomePageVO vo = new UserHomePageVO();
         BeanUtils.copyProperties(userPersonInfoVO,vo);
-        vo.setId(Long.parseLong((userPersonInfoVO.getId())));
-        vo.setFollowNum(followNum);
-        vo.setFansNum(fansNum);
-        // TODO: 没封装完
+        vo.setId(userId); // id
+        vo.setFollowNum(followNum); // 关注数量
+        vo.setFansNum(fansNum); // 粉丝数量
+        vo.setLikedNum(likeNums); // 点赞数量
+        vo.setWorkNum(workNums); // 作品数量
+        vo.setIsFollow(isFollow); // 当前用户是否关注
 
-        // 6.返回 vo
+        // 5.返回 vo
         return ResponseResult.successResult(vo);
     }
 }

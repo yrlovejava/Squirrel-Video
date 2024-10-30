@@ -179,8 +179,12 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
     @Override
     public ResponseResult<Boolean> isFollow(Long firstUserId, Long secondUserId) {
         // 1.参数校验
-        if(firstUserId == null || secondUserId == null){
+        if(secondUserId == null){
             throw new NullParamException();
+        }
+        if (firstUserId == null){
+            // 没登陆默认为没关注
+            return ResponseResult.successResult(Boolean.FALSE);
         }
 
         // 2.查询是否关注

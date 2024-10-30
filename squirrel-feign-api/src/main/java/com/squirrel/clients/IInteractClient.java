@@ -35,4 +35,14 @@ public interface IInteractClient {
      */
     @GetMapping("/azaz/follow/eachOther")
     ResponseResult<Boolean> isFollowEachOther(FollowEachOtherDTO dto);
+
+    /**
+     * 判断是否关注
+     * @param firstUser 第一个用户
+     * @param senderUser 第二个用户
+     * @return ResponseResult<Boolean> 是否关注
+     */
+    @GetMapping("/azaz/interact/follow/isFollow")
+    ResponseResult<Boolean> isFollow(@RequestParam("firstUser")Long firstUser,
+                                     @RequestParam("senderUser")Long senderUser);
 }

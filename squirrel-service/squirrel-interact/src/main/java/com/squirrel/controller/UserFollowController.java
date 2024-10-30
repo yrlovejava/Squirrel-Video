@@ -30,18 +30,6 @@ public class UserFollowController {
     }
 
     /**
-     * 判断是否关注
-     * @param firstUser 第一个用户
-     * @param senderUser 第二个用户
-     * @return 是否关注
-     */
-    @GetMapping("/isFollow")
-    public ResponseResult<Boolean> isFollow(@RequestParam("firstUser")Long firstUser,
-                                            @RequestParam("senderUser")Long senderUser) {
-        return userFollowService.isFollow(firstUser,senderUser);
-    }
-
-    /**
      * 获取互关列表朋友列表
      * @return ResponseResult 互关朋友列表
      */
