@@ -49,6 +49,16 @@
             <groupId>org.redisson</groupId>
             <artifactId>redisson</artifactId>
         </dependency>
+        <!-- druid 连接池依赖 -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+        </dependency>
+        <!-- mongoDB 依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
         <!--common 模块 -->
         <dependency>
             <groupId>com.squirrel</groupId>

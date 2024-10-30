@@ -58,24 +58,4 @@ public class UserFollowController {
     public ResponseResult<List<UserPersonInfoVO>> getFollowList(){
         return userFollowService.getFollowList();
     }
-
-    /**
-     * 获取关注总数
-     * @param userId 用户id
-     * @return ResponseResult 关注总数
-     */
-    @GetMapping("/num")
-    public ResponseResult<Integer> getFollowNum(@RequestParam("userId")Long userId){
-        return userFollowService.getFollowNum(userId);
-    }
-
-    /**
-     * 获取粉丝数
-     * @param userId 用户id
-     * @return 粉丝数
-     */
-    @GetMapping("/fansNum")
-    public ResponseResult<Integer> getFansNum(@RequestParam("userId")Long userId){
-        return userFollowService.getFansNum(userId);
-    }
 }

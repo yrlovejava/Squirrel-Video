@@ -24,8 +24,9 @@ public class InteractClient implements IInteractClient {
      * @return 关注总数
      */
     @Override
+    @GetMapping("/azaz/interact/follow/num")
     public ResponseResult<Integer> getFollowNum(Long userId) {
-        return null;
+        return userFollowService.getFollowNum(userId);
     }
 
     /**
@@ -34,8 +35,9 @@ public class InteractClient implements IInteractClient {
      * @return 粉丝总数
      */
     @Override
+    @GetMapping("/azaz/interact/fansNum")
     public ResponseResult<Integer> getFansNum(Long userId) {
-        return null;
+        return userFollowService.getFansNum(userId);
     }
 
     /**

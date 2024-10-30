@@ -6,6 +6,15 @@ spring:
     url: jdbc:mysql://${squirrel.datasource.host}:${squirrel.datasource.port}/${squirrel.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
     username: ${squirrel.datasource.username}
     password: ${squirrel.datasource.password}
+    druid:
+      #     配置初始化大小、最小、最大线程数
+      initialSize: 5
+      minIdle: 5
+      time-between-eviction-runs-millis: 300000
+      #     保持长连接
+      keepAlive: true
+      maxPoolPreparedStatementPerConnectionSize: 20
+      useGlobalDataSourceStat: true
   redis:
     host: ${squirrel.redis.host}
     port: ${squirrel.redis.port}
@@ -16,7 +25,6 @@ spring:
       host: ${squirrel.mongodb.host}
       port: ${squirrel.mongodb.port}
       database: ${squirrel.mongodb.database}
-
   servlet:
     multipart:
       max-file-size: ${squirrel.servlet.multipart.max-file-size}

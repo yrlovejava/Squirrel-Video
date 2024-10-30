@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.squirrel.clients.IUserClient;
 import com.squirrel.constant.InteractConstant;
-import com.squirrel.constant.ResponseConstant;
 import com.squirrel.exception.*;
 import com.squirrel.mapper.PrivateMessageMapper;
 import com.squirrel.model.interact.vos.ChatListVO;
@@ -15,18 +14,18 @@ import com.squirrel.model.message.pojos.PrivateMessage;
 import com.squirrel.model.message.vos.MessageListVO;
 import com.squirrel.model.message.vos.MessageVO;
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.bos.UserPersonInfoBO;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
 import com.squirrel.service.PrivateMessageService;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -43,6 +42,12 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private RedissonClient redissonClient;
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
 
     /**
      * 发送私信
@@ -82,16 +87,14 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         Boolean isFollowEachOther = stringRedisTemplate.opsForSet().isMember(friendKey, dto.getReceiverId().toString());
 
         // 4.如果未互相关注最多只能发送三条私信，未关注不能分享视频
+        String messageKey = InteractConstant.REDIS_PRIVATE_MESSAGE_KEY + Math.min(userId, dto.getReceiverId()) + "-" + Math.max(userId, dto.getReceiverId()) + ":";
         if (Boolean.FALSE.equals(isFollowEachOther)){
             // 4.1 判断是否是视频
             if (dto.getStatus().equals(InteractConstant.TYPE_FRIEND_SHARE)){
                 throw new ErrorParamException("未相互关注用户不能分享视频！");
             }
             // 4.2查询私信条数
-            Long count = getBaseMapper().selectCount(Wrappers.<PrivateMessage>lambdaQuery()
-                    .eq(PrivateMessage::getReceiverId, dto.getReceiverId())
-                    .eq(PrivateMessage::getSenderId, userId)
-            );
+            Long count = stringRedisTemplate.opsForList().size(messageKey);
             // 如果私信条数大于等于 3 条
             if (count >= InteractConstant.MESSAGE_MAX_COUNT){
                 throw new ErrorParamException("最多向未互关朋友发送三条私信！");
@@ -110,36 +113,15 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         // 5.2保存在数据库
         try {
             save(privateMessage);
+
+            // 6.异步操作 redis
+            rocketMQTemplate.convertAndSend("private_message",privateMessage);
         }catch (Exception e){
             log.error("私信保存数据库失败: {}",e.toString());
             throw new DbOperationException("私信保存失败");
         }
 
-        // 6.将私信转换为 vo
-        MessageVO messageVO = MessageVO.builder()
-                .messageId(privateMessage.getId().toString())
-                .messageContent(privateMessage.getMessageContent())
-                .senderId(userId.toString())
-                .receiverId(dto.getReceiverId().toString())
-                .createTime(privateMessage.getCreateTime())
-                .status(dto.getStatus())
-                .build();
-
-        // 7.向redis中添加私信
-        // 7.1获取key "private_message【小id】-【大id】"
-        String messageKey = InteractConstant.REDIS_PRIVATE_MESSAGE_KEY + Math.min(userId,dto.getReceiverId()) + "-" + Math.max(userId,dto.getReceiverId()) + ":";
-        // 7.2添加私信 lPush保证顺序
-        stringRedisTemplate.opsForList().leftPush(messageKey, JSON.toJSONString(messageVO));
-        // 7.3设置过期时间为1周
-        stringRedisTemplate.expire(messageKey,7, TimeUnit.DAYS);
-        // 7.4检查私信数量是否超过30条，超过则删除最早的一条
-        Long size = stringRedisTemplate.opsForList().size(messageKey);
-        if (size == null || size > InteractConstant.REDIS_PRIVATE_MESSAGE_MAX_COUNT) {
-            // 从右边弹出一条即可
-            stringRedisTemplate.opsForList().rightPop(messageKey);
-        }
-
-        // 8.返回成功
+        // 7.返回成功
         return ResponseResult.successResult();
     }
 
@@ -256,6 +238,25 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
      */
     @Override
     public ResponseResult<ChatListVO> chatList() {
+        // 1.获取当前用户的id
+        Long userId = ThreadLocalUtil.getUserId();
+        if (userId == null) {
+            throw new UserNotLoginException();
+        }
+
+        // 2.获取key
+        String chatListKey = InteractConstant.REDIS_USER_CHAT_LIST_KEY + userId;
+
+        // 3.查询redis
+        List<String> chatList = stringRedisTemplate.opsForList().range(chatListKey, 0, -1);
+        if (chatList == null || chatList.isEmpty()) {
+            return ResponseResult.successResult(ChatListVO.builder()
+                    .chatVOList(Collections.emptyList())
+                    .build());
+        }
+
+        // 4.TODO: 查询用户的信息
+
         return null;
     }
 }

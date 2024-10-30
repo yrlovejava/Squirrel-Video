@@ -9,6 +9,15 @@ spring:
     port: ${squirrel.redis.port}
     password: ${squirrel.redis.password}
     database: ${squirrel.redis.database}
+rocketmq:
+  name-server: ${squirrel.rocketmq.name-server}
+  producer:
+    group: ${squirrel.rocketmq.producer.group}
+    send-message-timeout: ${squirrel.rocketmq.producer.send-message-timeout}
+    retry-times-when-send-failed: ${squirrel.rocketmq.producer.retry-times-when-send-failed}
+    retry-times-when-send-async-failed: ${squirrel.rocketmq.producer.retry-times-when-send-async-failed}
+  consumer:
+    group: ${squirrel.rocketmq.consumer.group}
 # 配置mybatis
 mybatis:
   #mapper配置文件
