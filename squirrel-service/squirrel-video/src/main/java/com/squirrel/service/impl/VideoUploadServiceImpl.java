@@ -98,6 +98,8 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
             String videoKey = VideoConstant.VIDEO_LIST_KEY + video.getId();
             // 5.2将视频存储在对应videoId下
             stringRedisTemplate.opsForList().leftPush(videoKey,JSON.toJSONString(video));
+            // 5.3存储在 userId 下的videoId
+            stringRedisTemplate.opsForSet().add(VideoConstant.USER_VIDEO_SET + userId, video.getId().toString());
         }catch (Exception e){
             log.error("视频保存失败: {}",e.toString());
             throw new DbOperationException("保存视频信息失败");

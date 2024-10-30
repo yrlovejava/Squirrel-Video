@@ -80,4 +80,14 @@ public class VideoController {
         return videoUploadService.videos(lastVideoId);
     }
 
+    /**
+     * 是否点赞
+     * @param videoId 视频id
+     * @return ResponseResult 是否点赞
+     */
+    @GetMapping("/isLike")
+    public ResponseResult isLike(Long videoId){
+        return videoDoLikeService.isLike(videoId);
+    }
+
 }

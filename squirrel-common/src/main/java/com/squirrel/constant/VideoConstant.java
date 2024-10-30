@@ -62,6 +62,17 @@ public class VideoConstant {
     public static final String SET_COLLECT_KEY = "set_collect:";
     public static final String SET_COMMENT_KEY = "set_comment:";
 
+    //===============与videoId对应的video对象==============
+    public static final String VIDEO_ID = "video_id:";
+
+    //===============记录user总点赞数的key===================
+    public static final String USER_LIKES_SUM = "user_likes_sum:";
+    public static final String USER_COLLECT_SUM = "user_collect_sum:";
+    public static final String USER_COMMENTS_SUM = "user_comments_sum:";
+
+    //===============记录userId下的所有视频id====================
+    public static final String USER_VIDEO_SET = "user_video_set:";
+
     //=================记录video的点赞数的key====================
     public static final String STRING_LIKE_KEY = "string_like:";
     public static final String STRING_COLLECT_KEY = "string_collect:";

@@ -23,4 +23,17 @@ public interface VideoDoLikeService {
      * @return ResponseResult 操作结果
      */
     ResponseResult collect(Long videoId,Long authorId,int type);
+
+    /**
+     * 是否点赞
+     * @param videoId 视频id
+     * @return ResponseResult 是否点赞
+     */
+    ResponseResult isLike(Long videoId);
+
+    /**
+     * 获取当前用户的点赞数量
+     * @return 点赞数量
+     */
+    Integer getUserLikes();
 }
