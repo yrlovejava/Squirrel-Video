@@ -1,22 +1,24 @@
 package com.squirrel.service.impl;
 
 import com.alibaba.fastjson2.JSON;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.squirrel.clients.IUserClient;
 import com.squirrel.constant.InteractConstant;
 import com.squirrel.exception.*;
 import com.squirrel.mapper.PrivateMessageMapper;
 import com.squirrel.model.interact.vos.ChatListVO;
+import com.squirrel.model.interact.vos.ChatVO;
 import com.squirrel.model.message.dtos.MessageListDTO;
 import com.squirrel.model.message.dtos.MessageSendDTO;
 import com.squirrel.model.message.pojos.PrivateMessage;
 import com.squirrel.model.message.vos.MessageListVO;
 import com.squirrel.model.message.vos.MessageVO;
 import com.squirrel.model.response.ResponseResult;
+import com.squirrel.model.user.vos.UserPersonInfoVO;
 import com.squirrel.service.PrivateMessageService;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -152,9 +154,18 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         }
 
         // 3.从redis中查询私信
-        // 3.1生成key "private_message【小id】-【大id】"
+        // 3.1生成key "private_message【小id】-【大id】:"
         String messageKey = InteractConstant.REDIS_PRIVATE_MESSAGE_KEY + Math.min(userId,dto.getFriendId()) + "-" + Math.max(userId, dto.getFriendId()) + ":";
-        // 3.2从redis中查询所有私信
+        // 3.2查询redis中是否包含私信key
+        Boolean hasKey = stringRedisTemplate.hasKey(messageKey);
+        if (hasKey == null || Boolean.FALSE.equals(hasKey) || dto.getLastMessageId() != 0) {
+            // redis中没有私信key，从数据库中查询
+            return getMessagesInDb(userId,
+                    dto.getFriendId(),
+                    dto.getLastMessageId(),
+                    messageKey);
+        }
+        // 3.3从redis中查询所有私信
         List<String> messageList = stringRedisTemplate.opsForList().range(messageKey, 0, -1);
         if (messageList == null || messageList.isEmpty()) {
             // 如果redis中没有，查询数据库，并写入redis
@@ -163,12 +174,12 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
                     dto.getLastMessageId(),
                     messageKey);
         }
-        // 3.3将私信封装为 vo
+        // 4将私信封装为 vo
         List<MessageVO> messageVOList = messageList.stream()
                 .map(m -> JSON.parseObject(m, MessageVO.class))
                 .collect(Collectors.toList());
 
-        // 4.封装私信列表 vo
+        // 5.封装私信列表 vo
         int total = messageVOList.size();
         MessageListVO messageListVO = MessageListVO.builder()
                 .total(total)
@@ -255,8 +266,40 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
                     .build());
         }
 
-        // 4.TODO: 查询用户的信息
+        // 4.查询用户的信息
+        List<ChatVO> chatVoList = new ArrayList<>();
+        for (String chatUserId : chatList) {
+            long otherId = Long.parseLong(chatUserId);
+            UserPersonInfoVO userPersonInfoVO = userClient.getUserPersonInfo(otherId).getData();
+            if (userPersonInfoVO == null){
+                continue;
+            }
+            // 4.1生成key "private_message【小id】-【大id】:"
+            String messageKey = InteractConstant.REDIS_PRIVATE_MESSAGE_KEY + Math.min(userId, otherId) + "-" + Math.max(userId, otherId) + ":";
+            // 4.1获取私信列表的第一条私信
+            String message = stringRedisTemplate.opsForList().index(messageKey, 0);
+            if (StringUtils.isBlank(message)){
+                continue;
+            }
+            // 4.2封装chatVO
+            MessageVO messageVO = JSON.parseObject(message, MessageVO.class);
+            ChatVO chatVO = ChatVO.builder()
+                    .id(Long.toString(otherId))
+                    .username(userPersonInfoVO.getUsername())
+                    .image(userPersonInfoVO.getImage())
+                    .signature(userPersonInfoVO.getSignature())
+                    .latestMessage(messageVO.getMessageContent())
+                    .build();
+            chatVoList.add(chatVO);
+        }
 
-        return null;
+        // 5.封装chatListVO
+        ChatListVO chatListVo = ChatListVO.builder()
+                .chatVOList(chatVoList)
+                .total(chatVoList.size())
+                .build();
+
+        // 6.返回VO
+        return ResponseResult.successResult(chatListVo);
     }
 }
