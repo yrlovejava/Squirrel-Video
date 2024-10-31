@@ -1,12 +1,11 @@
 package com.squirrel.controller;
 
-import com.squirrel.exception.NullParamException;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.dtos.VideoPublishDTO;
 import com.squirrel.model.video.pojos.Video;
+import com.squirrel.model.video.pojos.VideoList;
 import com.squirrel.service.VideoDoLikeService;
 import com.squirrel.service.VideoUploadService;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -132,10 +131,35 @@ public class VideoController {
 
     /**
      * 得到用户收藏过的所有视频
+     * @param currentPage 当前页
+     * @param userId 用户id
      * @return ResponseResult 收藏过的所有视频
      */
-    @GetMapping("/collects")
-    public ResponseResult collectVideos() {
-        return videoDoLikeService.showCollectsList();
+    @GetMapping("/showCollectList")
+    public ResponseResult<VideoList> collects(Integer currentPage, Integer userId) {
+        return videoDoLikeService.showCollectsList(currentPage,userId);
+    }
+
+    /**
+     * 评论视频
+     * @param videoId 视频id
+     * @param parentId 关联的评论
+     * @param content 评论内容
+     * @return ResponseResult 评论操作结果
+     */
+    @PostMapping("/doComment")
+    public ResponseResult doComment(Long videoId,Long parentId,String content) {
+        return videoDoLikeService.doComment(videoId,parentId,content);
+    }
+
+    /**
+     * 得到当前评论的子评论
+     * @param commentId 当前评论的id
+     * @param videoId 视频id
+     * @return ResponseResult 评论集合
+     */
+    @GetMapping("/getCommentList")
+    public ResponseResult doComment(Long commentId,Long videoId) {
+        return videoDoLikeService.getCommentList(commentId,videoId);
     }
 }

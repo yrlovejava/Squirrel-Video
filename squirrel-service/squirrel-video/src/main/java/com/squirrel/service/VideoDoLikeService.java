@@ -2,6 +2,7 @@ package com.squirrel.service;
 
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.pojos.Video;
+import com.squirrel.model.video.pojos.VideoList;
 
 import java.util.List;
 
@@ -63,9 +64,11 @@ public interface VideoDoLikeService {
 
     /**
      * 得到用户收藏过的所有视频
+     * @param currentPage 当前页
+     * @param userId 用户id
      * @return ResponseResult 收藏过的所有视频
      */
-    ResponseResult showCollectsList();
+    ResponseResult<VideoList> showCollectsList(Integer currentPage, Integer userId);
 
     /**
      * 获取用户所有作品的数量
@@ -73,4 +76,21 @@ public interface VideoDoLikeService {
      * @return ResponseResult<Integer> 作品数
      */
     ResponseResult<Integer> getUserWorks(Long userId);
+
+    /**
+     * 评论视频
+     * @param videoId 视频id
+     * @param parentId 关联的评论
+     * @param content 评论内容
+     * @return ResponseResult 评论操作结果
+     */
+    ResponseResult doComment(Long videoId, Long parentId, String content);
+
+    /**
+     * 得到当前评论的子评论
+     * @param commentId 当前评论的id
+     * @param videoId 视频id
+     * @return ResponseResult 评论集合
+     */
+    ResponseResult getCommentList(Long commentId, Long videoId);
 }

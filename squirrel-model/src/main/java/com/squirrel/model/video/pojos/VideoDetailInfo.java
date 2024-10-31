@@ -61,7 +61,12 @@ public class VideoDetailInfo {
     /**
      * 是否点赞
      */
-    private boolean isLike;
+    private boolean isLiked;
+
+    /**
+     * 是否收藏
+     */
+    private boolean isCollected;
 
     /**
      * 作者名字
