@@ -75,8 +75,8 @@ public class VideoConstant {
     public static final String USER_COLLECT_SUM = "user_collect_sum:";
     public static final String USER_COMMENTS_SUM = "user_comments_sum:";
 
-    //===============记录userId下的所有视频id====================
-    public static final String USER_VIDEO_SET = "user_video_set:";
+    //===============记录userId下的所有视频id，以list存储====================
+    public static final String USER_VIDEO_SET_LIST = "user_video_list:";
 
     //=================记录video的点赞数的key====================
     public static final String STRING_LIKE_KEY = "string_like:";

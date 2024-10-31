@@ -350,7 +350,7 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
         }
 
         // 2.获取key
-        String userVideoKey = VideoConstant.USER_VIDEO_SET + userId;
+        String userVideoKey = VideoConstant.USER_VIDEO_SET_LIST + userId;
 
         // 3.查询redis
         Set<String> videoIds = stringRedisTemplate.opsForSet().members(userVideoKey);
