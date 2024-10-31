@@ -3,9 +3,12 @@ package com.squirrel.controller;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.vos.UserListVO;
 import com.squirrel.model.video.vos.VideoListVO;
+import com.squirrel.service.SearchService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
 
 /**
  * 搜索服务控制器
@@ -13,6 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/azaz/search")
 public class SearchController {
+
+    @Resource
+    private SearchService searchService;
 
     /**
      * 搜索用户
@@ -23,7 +29,7 @@ public class SearchController {
      */
     @GetMapping("/user")
     public ResponseResult<UserListVO> searchUser(String keyword,Integer page,Integer pageSize) {
-
+        return searchService.searchUser(keyword, page, pageSize);
     }
 
     /**
@@ -35,7 +41,7 @@ public class SearchController {
      */
     @GetMapping("/video")
     public ResponseResult<VideoListVO> searchVideo(String keyword, Integer page, Integer pageSize) {
-
+        return searchService.searchVideo(keyword, page, pageSize);
     }
 
 }
