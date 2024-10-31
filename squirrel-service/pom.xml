@@ -25,13 +25,6 @@
     </properties>
 
     <dependencies>
-        <!-- model 模块 -->
-        <dependency>
-            <groupId>com.squirrel</groupId>
-            <artifactId>squirrel-model</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
         <!-- common 模块 -->
         <dependency>
             <groupId>com.squirrel</groupId>
