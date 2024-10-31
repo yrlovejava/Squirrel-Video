@@ -14,3 +14,10 @@ spring:
         server-addr: 139.159.224.143:8848
         namespace: d64ca5c3-157d-445f-bc90-1dacdb1767c0
         file-extension: yaml
+feign:
+  client:
+    config:
+      default: # 这里用default就是全局配置，如果是写服务名称，则是针对某个微服务的配置
+        loggerLevel: BASIC #  日志级别
+        connectTimeout: 600000 # 连接超时时间
+        readTimeout: 600000 # 读取超时时间

@@ -428,4 +428,26 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
         // 4.返回结果
         return ResponseResult.successResult(list);
     }
+
+    /**
+     * 获取用户的作品数量
+     * @param userId 用户id
+     * @return ResponseResult<Integer> 作品数量
+     */
+    @Override
+    public ResponseResult<Integer> getUserWorks(Long userId) {
+        // 1.校验参数
+        if (userId == null) {
+            throw new NullParamException();
+        }
+
+        // 2.获取key
+        String userWorkKey = VideoConstant.USER_VIDEO_SET_LIST + userId;
+
+        // 3.查询redis
+        Long size = stringRedisTemplate.opsForList().size(userWorkKey);
+
+        // 4.返回数量
+        return ResponseResult.successResult(size.intValue());
+    }
 }

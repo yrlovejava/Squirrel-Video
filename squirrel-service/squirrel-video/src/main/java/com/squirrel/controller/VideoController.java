@@ -7,10 +7,7 @@ import com.squirrel.model.video.pojos.Video;
 import com.squirrel.service.VideoDoLikeService;
 import com.squirrel.service.VideoUploadService;
 import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -100,7 +97,7 @@ public class VideoController {
      * @return ResponseResult<Integer> 用户被赞数
      */
     @GetMapping("/getUserLikes")
-    public ResponseResult<Integer> getUserLikes(Long userId){
+    public ResponseResult<Integer> getUserLikes(@RequestParam("userId")Long userId){
         return videoDoLikeService.getUserLikes(userId);
     }
 
@@ -110,7 +107,7 @@ public class VideoController {
      * @return ResponseResult<Integer> 用户被收藏数
      */
     @GetMapping("/getUserCollects")
-    public ResponseResult<Integer> getUserCollects(Long userId) {
+    public ResponseResult<Integer> getUserCollects(@RequestParam("userId")Long userId) {
         return videoDoLikeService.getUserCollects(userId);
     }
 

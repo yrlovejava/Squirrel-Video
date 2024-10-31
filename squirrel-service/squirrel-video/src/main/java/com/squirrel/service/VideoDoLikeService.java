@@ -66,4 +66,11 @@ public interface VideoDoLikeService {
      * @return ResponseResult 收藏过的所有视频
      */
     ResponseResult showCollectsList();
+
+    /**
+     * 获取用户所有作品的数量
+     * @param userId 用户id
+     * @return ResponseResult<Integer> 作品数
+     */
+    ResponseResult<Integer> getUserWorks(Long userId);
 }

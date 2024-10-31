@@ -20,6 +20,7 @@ import com.squirrel.service.VideoUploadService;
 import com.squirrel.utils.FileUtil;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -57,6 +58,9 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
 
     @Resource
     private MongoTemplate mongoTemplate;
+
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
 
     /**
      * 发布视频
@@ -119,16 +123,19 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
             stringRedisTemplate.opsForList().leftPush(videoKey, JSON.toJSONString(video));
             // 5.3存储在 userId 下的videoId
             stringRedisTemplate.opsForList().leftPush(VideoConstant.USER_VIDEO_SET_LIST + userId, video.getId().toString());
+
+            // 6.异步更新ES
+            rocketMQTemplate.convertAndSend("video_publish", video);
         } catch (Exception e) {
             log.error("视频保存失败: {}", e.toString());
             throw new DbOperationException("保存视频信息失败");
         }
 
-        // 5.封装 vo
+        // 7.封装 vo
         VideoUploadVO vo = new VideoUploadVO();
         BeanUtils.copyProperties(video, vo);
 
-        // 6.返回 vo
+        // 8.返回 vo
         return ResponseResult.successResult(vo);
     }
 
