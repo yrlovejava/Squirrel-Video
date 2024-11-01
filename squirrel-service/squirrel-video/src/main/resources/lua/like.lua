@@ -8,8 +8,10 @@
 --ARGV[1] 当前用户的id
 --ARGV[2] 视频的id
 
--- 1.视频点赞
-redis.call('sadd',KEYS[1],ARGV[1])
+-- 1.视频点赞，如果已经点赞就报错
+if (redis.call('sadd',KEYS[1],ARGV[1]) == 0 ) then
+    redis.error_reply("already like!")
+end
 
 -- 2.增加视频点赞数量
 redis.call('incr',KEYS[2])

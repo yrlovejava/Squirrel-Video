@@ -7,7 +7,6 @@ import com.squirrel.model.video.pojos.Video;
 import com.squirrel.model.video.pojos.VideoLike;
 import com.squirrel.service.DbOpsService;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RedissonClient;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -32,9 +31,6 @@ import java.util.Set;
 @Slf4j
 @Service
 public class DbOpsServiceImpl implements DbOpsService {
-
-    @Resource
-    private RedissonClient redissonClient;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;

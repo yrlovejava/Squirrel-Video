@@ -17,6 +17,7 @@ import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -132,8 +133,13 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
                     // 执行lua脚本
                     this.stringRedisTemplate.execute(LIKE_SCRIPT, keys, userId.toString(), videoId.toString());
                 } catch (Exception e) {
-                    log.error("lua脚本执行失败: {}", e.toString());
-                    throw new LuaExecuteException();
+                    if (e instanceof RedisSystemException){
+                        log.error("重复点赞");
+                        throw new ErrorOperationException("请勿重复点赞");
+                    }else {
+                        log.error("lua脚本执行失败: {}", e.toString());
+                        throw new LuaExecuteException("lua脚本执行失败");
+                    }
                 }
                 // 异步添加到mongoDB
                 dbOpsService.insertIntoMongoDB(userId, videoId, VideoConstant.LIKE_TYPE, 1);
@@ -153,14 +159,19 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
                     // 执行lua脚本
                     this.stringRedisTemplate.execute(UNLIKE_SCRIPT, keys, userId.toString(), videoId.toString());
                 } catch (Exception e) {
-                    log.error("lua脚本执行失败: {}", e.toString());
-                    throw new LuaExecuteException();
+                    if (e instanceof RedisSystemException){
+                        log.error("重复取消");
+                        throw new ErrorOperationException("请勿重复取消");
+                    }else {
+                        log.error("lua脚本执行失败: {}", e.toString());
+                        throw new LuaExecuteException("lua脚本执行失败");
+                    }
                 }
                 // 异步更新到mongoDB
                 dbOpsService.insertIntoMongoDB(userId, videoId, VideoConstant.LIKE_TYPE, 0);
                 return ResponseResult.successResult();
             } else {
-                return ResponseResult.errorResult("重复提交");
+                return ResponseResult.errorResult("重复取消");
             }
         }
     }
@@ -213,8 +224,13 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
                     // 执行lua脚本
                     this.stringRedisTemplate.execute(COLLECT_SCRIPT, keys, userId.toString(), videoId.toString());
                 } catch (Exception e) {
-                    log.error("lua脚本执行失败: {}", e.toString());
-                    throw new LuaExecuteException();
+                    if (e instanceof RedisSystemException){
+                        log.error("重复收藏");
+                        throw new ErrorOperationException("请勿重复收藏");
+                    }else {
+                        log.error("lua脚本执行失败: {}", e.toString());
+                        throw new LuaExecuteException("lua脚本执行失败");
+                    }
                 }
                 //异步添加到mongodb
                 dbOpsService.insertIntoMongoDB(userId, videoId, VideoConstant.COLLECT_TYPE, 1);
@@ -235,8 +251,13 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
                     // 执行lua脚本
                     this.stringRedisTemplate.execute(UNCOLLECT_SCRIPT, keys, userId.toString(), videoId.toString());
                 } catch (Exception e) {
-                    log.error("lua脚本执行失败: {}", e.toString());
-                    throw new LuaExecuteException();
+                    if (e instanceof RedisSystemException){
+                        log.error("重复取消");
+                        throw new ErrorOperationException("请勿重复取消");
+                    }else {
+                        log.error("lua脚本执行失败: {}", e.toString());
+                        throw new LuaExecuteException("lua脚本执行失败");
+                    }
                 }
                 //异步更新到mongodb
                 dbOpsService.insertIntoMongoDB(userId, videoId, VideoConstant.COLLECT_TYPE, 0);

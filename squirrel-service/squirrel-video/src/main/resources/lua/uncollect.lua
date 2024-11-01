@@ -9,7 +9,9 @@
 --ARGV[2] 视频的id
 
 -- 1.删除数据
-redis.call('srem',KEYS[1],ARGV[1])
+if (redis.call('srem',KEYS[1],ARGV[1]) == 0) then
+    redis.error_reply("already uncollect!")
+end
 
 -- 2.减少视频收藏数量
 redis.call('decr',KEYS[2])
