@@ -10,7 +10,7 @@ import com.squirrel.exception.QiniuException;
 import com.squirrel.exception.UserNotLoginException;
 import com.squirrel.mapper.VideoMapper;
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import com.squirrel.model.video.dtos.VideoPublishDTO;
 import com.squirrel.model.video.pojos.*;
 import com.squirrel.model.video.vos.VideoDetail;
@@ -38,6 +38,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 视频上传接口实现类
@@ -178,16 +179,20 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
      * @return ResponseResult
      */
     @Override
-    public ResponseResult videos(Integer lastVideoId) {
+    public ResponseResult<GetVideoInfo> videos(Integer lastVideoId) {
         // 1.参数校验
         if (lastVideoId == null) {
             throw new NullParamException();
+        }
+        if (lastVideoId == 0){
+            String lastVideoIdStr = stringRedisTemplate.opsForValue().get(VideoConstant.LAST_VIDEO_ID);
+            lastVideoId = Integer.parseInt(Objects.requireNonNull(lastVideoIdStr));
         }
 
         // 2.查询redis
         GetVideoInfo getVideoInfo = new GetVideoInfo();
         List<VideoDetailInfo> videoList = new ArrayList<>();
-        for (int i = lastVideoId * 10 + 1; i < lastVideoId * 10 + 11; i++) {
+        for (int i = lastVideoId; i > lastVideoId - 10; i--) {
             //i就是videoId
             //得到video对象
             Video video = getVideoById(i);
@@ -205,54 +210,27 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
             String format = video.getCreateTime().format(df);
             videoDetailInfo.setCreateTime(format);
             // 判断是否喜欢
-            videoDetailInfo.setLiked(this.isLike((long) i));
+            boolean isLiked = this.isDo((long) i, VideoConstant.SET_LIKE_KEY + video.getId());
+            videoDetailInfo.setLiked(isLiked);
+            // 判断是否收藏
+            boolean isCollected = this.isDo((long) i, VideoConstant.SET_COLLECT_KEY + video.getId());
+            videoDetailInfo.setCollected(isCollected);
             // 得到作者信息
-            ResponseResult<UserPersonInfoVO> res = userClient.getUserPersonInfo(video.getAuthorId());
-            UserPersonInfoVO user = res.getData();
+            ResponseResult<UserPersonalInfoVO> res = userClient.getUserPersonInfo(video.getAuthorId());
+            UserPersonalInfoVO user = res.getData();
+            // 用户名
             videoDetailInfo.setUserName(user.getUsername());
+            // 用户头像
             videoDetailInfo.setImage(user.getImage());
+
             videoList.add(videoDetailInfo);
         }
 
         getVideoInfo.setVideoList(videoList);
-        getVideoInfo.setLastVideoId(lastVideoId + 10);
+        getVideoInfo.setLastVideoId(lastVideoId - 10);
         getVideoInfo.setTotal(videoList.size());
 
         return ResponseResult.successResult(getVideoInfo);
-    }
-
-    /**
-     * 判断当前用户是否对当前视频进行点赞
-     * @param videoId 视频id
-     * @return 是否点赞
-     */
-    private boolean isLike(Long videoId) {
-        // 1.获取当前用户
-        Long userId = ThreadLocalUtil.getUserId();
-        if (userId == null) {
-            throw new UserNotLoginException();
-        }
-
-        // 2.获取key
-        String setLikeKey = VideoConstant.SET_LIKE_KEY + videoId;
-
-        // 3.判断key是否存在
-        Boolean hasKey = stringRedisTemplate.hasKey(setLikeKey);
-        if (Boolean.TRUE.equals(hasKey)) {
-            // 4.如果userId 在 set中，说明已经点过赞了
-            Boolean isMember = stringRedisTemplate.opsForSet().isMember(setLikeKey, userId.toString());
-            return Boolean.TRUE.equals(isMember);
-        }else {
-            // 5.如果不存在，那么就从 mongoDB 中获取
-            // 5.1查询当前用户id和视频id所在的字段
-            Criteria criteria = Criteria.where("userId").is(userId.toString())
-                    .and("videoId").is(videoId.toString());
-            Query query = Query.query(criteria);
-            VideoLike one = mongoTemplate.findOne(query, VideoLike.class);
-
-            // 6.如果此字段不存在，那么就返回未点赞
-            return one != null;
-        }
     }
 
     /**
@@ -346,9 +324,9 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
         videoDetail.setIsCollected(isCollected);
         // 得到作者信息
         log.info("获取作者信息，作者id: {}",video.getAuthorId());
-        ResponseResult<UserPersonInfoVO> res = userClient.getUserPersonInfo(video.getAuthorId());
+        ResponseResult<UserPersonalInfoVO> res = userClient.getUserPersonInfo(video.getAuthorId());
         log.info("获取作者信息，结果: {}",res);
-        UserPersonInfoVO user = res.getData();
+        UserPersonalInfoVO user = res.getData();
         // 名字
         videoDetail.setUserName(user.getUsername());
         // 头像

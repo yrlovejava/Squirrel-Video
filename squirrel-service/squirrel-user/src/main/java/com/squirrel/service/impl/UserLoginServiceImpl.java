@@ -6,10 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.squirrel.constant.UserConstant;
 import com.squirrel.constant.UserDefaultImageConstant;
-import com.squirrel.exception.ErrorParamException;
-import com.squirrel.exception.NullParamException;
-import com.squirrel.exception.PasswordErrorException;
-import com.squirrel.exception.UserNotExitedException;
+import com.squirrel.exception.*;
 import com.squirrel.mapper.UserMapper;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.dtos.RegisterDTO;
@@ -17,7 +14,10 @@ import com.squirrel.model.user.dtos.UserLoginDTO;
 import com.squirrel.model.user.pojos.User;
 import com.squirrel.model.user.vos.UserLoginVO;
 import com.squirrel.service.UserLoginService;
+import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
@@ -35,6 +35,9 @@ public class UserLoginServiceImpl extends ServiceImpl<UserMapper, User> implemen
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private RedissonClient redissonClient;
+
     /**
      * 用户注册
      * @param dto 注册的 dto
@@ -42,7 +45,7 @@ public class UserLoginServiceImpl extends ServiceImpl<UserMapper, User> implemen
      */
     @Override
     public ResponseResult register(RegisterDTO dto) {
-        log.info("用户注册: {}", dto);
+        log.info("用户注册，注册信息: {}", dto);
         // 1.参数校验
         if (dto == null || dto.getPhone().isEmpty() || dto.getPassword().isEmpty()) {
             throw new NullParamException("注册信息不能为空！");
@@ -62,32 +65,46 @@ public class UserLoginServiceImpl extends ServiceImpl<UserMapper, User> implemen
         }
 
         // 4.查找手机号是否存在，来判断用户是否注册过
-        Long count = getBaseMapper().selectCount(Wrappers.<User>lambdaQuery().eq(User::getPhone, phone));
-        if (count > 0) {
-            // 说明手机号已注册过
-            throw new ErrorParamException("手机号已经注册！");
+        // 对手机号加锁，防止并发注册
+        RLock registerLock = redissonClient.getLock(UserConstant.USER_REGISTER_LOCK + phone);
+        boolean tryLock = registerLock.tryLock();
+        if (!tryLock){
+            // 出现并发注册，返回错误信息
+            throw new ErrorParamException("注册失败，请稍后再试");
         }
+        try {
+            Long count = getBaseMapper().selectCount(Wrappers.<User>lambdaQuery().eq(User::getPhone, phone));
+            if (count > 0) {
+                // 说明手机号已注册过
+                throw new ErrorParamException("手机号已经注册！");
+            }
 
-        // 5.注册用户
-        // 5.1生成 salt 五位的随机字符串
-        String salt = RandomUtil.randomString(5);
-        // 5.2 password + salt MD5加密
-        String passwordWithMD5 = DigestUtils.md5DigestAsHex((password + salt).getBytes());
-        // 5.3封装用户
-        User user = User.builder()
-                .salt(salt)
-                .phone(phone)
-                .password(passwordWithMD5)
-                .username(UserConstant.DEFAULT_USER_NAME_PRE + RandomUtil.randomString(5))
-                // 随机生成图像
-                .image(UserDefaultImageConstant.DEFAULT_USER_IMAGE_LIST[RandomUtil.randomInt(UserDefaultImageConstant.IMAGE_COUNT)])
-                .signature(UserConstant.DEFAULT_USER_SIGNATURE)
-                .build();
-        // 5.4向数据库中保存数据
-        save(user);
+            // 5.注册用户
+            // 5.1生成 salt 五位的随机字符串
+            String salt = RandomUtil.randomString(5);
+            // 5.2 password + salt MD5加密
+            String passwordWithMD5 = DigestUtils.md5DigestAsHex((password + salt).getBytes());
+            // 5.3封装用户
+            User user = User.builder()
+                    .salt(salt)
+                    .phone(phone)
+                    .password(passwordWithMD5)
+                    .username(UserConstant.DEFAULT_USER_NAME_PRE + RandomUtil.randomString(5))
+                    // 随机生成图像
+                    .image(UserDefaultImageConstant.DEFAULT_USER_IMAGE_LIST[RandomUtil.randomInt(UserDefaultImageConstant.IMAGE_COUNT)])
+                    .signature(UserConstant.DEFAULT_USER_SIGNATURE)
+                    .build();
+            // 5.4向数据库中保存数据
+            save(user);
 
-        // 6.返回响应
-        return ResponseResult.successResult();
+            // 6.返回响应
+            return ResponseResult.successResult();
+        }catch (Exception e){
+            log.error("注册失败: {}",e.toString());
+            throw new CustomException("注册失败");
+        }finally {
+            registerLock.unlock();
+        }
     }
 
     /**
@@ -96,7 +113,7 @@ public class UserLoginServiceImpl extends ServiceImpl<UserMapper, User> implemen
      * @return ResponseResult
      */
     @Override
-    public ResponseResult login(UserLoginDTO dto) {
+    public ResponseResult<UserLoginVO> login(UserLoginDTO dto) {
         log.info("用户登录: {}",dto);
         // 1.参数校验
         if (dto == null || dto.getPhone().isEmpty() || dto.getPassword().isEmpty()) {
@@ -149,5 +166,19 @@ public class UserLoginServiceImpl extends ServiceImpl<UserMapper, User> implemen
 
         // 9.返回 vo
         return ResponseResult.successResult(vo);
+    }
+
+    /**
+     * 用户登出
+     * @return ResponseResult
+     */
+    @Override
+    public ResponseResult logout() {
+        // 清除redis中token
+        Long userId = ThreadLocalUtil.getUserId();
+        String key = UserConstant.REDIS_LOGIN_TOKEN + userId;
+        stringRedisTemplate.delete(key);
+
+        return ResponseResult.successResult();
     }
 }

@@ -6,7 +6,7 @@ import lombok.Data;
  * 用户个人信息VO
  */
 @Data
-public class UserPersonInfoVO {
+public class UserPersonalInfoVO {
 
     /**
      * 用户id

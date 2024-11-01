@@ -2,7 +2,7 @@ package com.squirrel.controller;
 
 import com.squirrel.model.follow.dtos.UserFollowDTO;
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import com.squirrel.service.UserFollowService;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +34,7 @@ public class UserFollowController {
      * @return ResponseResult 互关朋友列表
      */
     @GetMapping("/friends")
-    public ResponseResult<List<UserPersonInfoVO>> getFriends() {
+    public ResponseResult<List<UserPersonalInfoVO>> getFriends() {
         return userFollowService.getFriends();
     }
 
@@ -43,7 +43,7 @@ public class UserFollowController {
      * @return ResponseResult 关注列表
      */
     @GetMapping("/list")
-    public ResponseResult<List<UserPersonInfoVO>> getFollowList(){
+    public ResponseResult<List<UserPersonalInfoVO>> getFollowList(){
         return userFollowService.getFollowList();
     }
 }

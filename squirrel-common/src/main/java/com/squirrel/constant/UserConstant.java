@@ -56,4 +56,9 @@ public class UserConstant {
      * 用户简略信息的 redis 过期时间
      */
     public static final Integer REDIS_USER_INFO_TTL = 24 * 60 * 60;
+
+    /**
+     * 用户注册锁的redis前缀
+     */
+    public static final String USER_REGISTER_LOCK = "user:register:lock:";
 }

@@ -20,5 +20,5 @@ public class UserListVO {
     /**
      * 用户列表
      */
-    private List<UserPersonInfoVO> list;
+    private List<UserPersonalInfoVO> list;
 }

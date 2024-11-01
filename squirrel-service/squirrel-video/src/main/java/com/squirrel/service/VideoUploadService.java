@@ -3,6 +3,7 @@ package com.squirrel.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.dtos.VideoPublishDTO;
+import com.squirrel.model.video.pojos.GetVideoInfo;
 import com.squirrel.model.video.pojos.Video;
 import com.squirrel.model.video.vos.VideoDetail;
 import com.squirrel.model.video.vos.VideoInfo;
@@ -32,7 +33,7 @@ public interface VideoUploadService extends IService<Video> {
      * @param lastVideoId 上一次视频id
      * @return ResponseResult
      */
-    ResponseResult videos(Integer lastVideoId);
+    ResponseResult<GetVideoInfo> videos(Integer lastVideoId);
 
     /**
      * 通过 videoId 得到 video 的实体类

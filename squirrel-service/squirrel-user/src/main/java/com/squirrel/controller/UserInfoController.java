@@ -1,14 +1,11 @@
-
-
-
 package com.squirrel.controller;
 
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.bos.UserPersonInfoBO;
+import com.squirrel.model.user.dtos.AckPasswordDTO;
 import com.squirrel.model.user.vos.UserHomePageVO;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import com.squirrel.service.UserInfoService;
-import jdk.management.resource.ResourceRequest;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,7 +32,7 @@ public class UserInfoController {
      * @return ResponseResult<UserPersonalInfoVo> 用户个人信息
      */
     @GetMapping("/personal")
-    public ResponseResult<UserPersonInfoVO> getUserPersonInfo(Long userId) {
+    public ResponseResult<UserPersonalInfoVO> getUserPersonInfo(Long userId) {
         return userInfoService.getUserPersonInfo(userId);
     }
 
@@ -47,7 +44,7 @@ public class UserInfoController {
      * @return ResponseResult<List<UserPersonInfoVO>>
      */
     @GetMapping("/personals")
-    public ResponseResult<List<UserPersonInfoVO>> getUserPersonInfoList(String[] ids) {
+    public ResponseResult<List<UserPersonalInfoVO>> getUserPersonInfoList(String[] ids) {
         Set<String> set = new HashSet<>(Arrays.asList(ids));
         return userInfoService.getUserPersonInfos(set);
     }
@@ -65,7 +62,7 @@ public class UserInfoController {
     /**
      * 上传用户头像
      * @param imageFile 用户头像文件
-     * @return ResponseResult 图片地址
+     * @return ResponseResult<String> 图片地址
      */
     @PostMapping("/image/upload")
     public ResponseResult<String> uploadUserImage(MultipartFile imageFile){
@@ -80,5 +77,15 @@ public class UserInfoController {
     @GetMapping("/homePage")
     public ResponseResult<UserHomePageVO> getUserHomePage(Long userId) {
         return userInfoService.homeUser(userId);
+    }
+
+    /**
+     * 校验密码
+     * @param dto 密码dto
+     * @return ResponseResult<Boolean> 校验结果
+     */
+    @GetMapping("/ackPassword")
+    public ResponseResult<Boolean> ackPassword(AckPasswordDTO dto){
+        return userInfoService.ackPassword(dto);
     }
 }

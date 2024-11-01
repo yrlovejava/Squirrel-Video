@@ -7,14 +7,13 @@ import com.squirrel.exception.SearchException;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.pojos.User;
 import com.squirrel.model.user.vos.UserListVO;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import com.squirrel.model.video.pojos.Video;
 import com.squirrel.model.video.vos.VideoDetail;
 import com.squirrel.model.video.vos.VideoListVO;
 import com.squirrel.service.SearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.queryparser.xml.builders.BooleanQueryBuilder;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -81,7 +80,7 @@ public class SearchServiceImpl implements SearchService {
         searchRequest.source(searchSourceBuilder);
 
         // 3.执行查询
-        List< UserPersonInfoVO> usrInfoList = new ArrayList<>();
+        List<UserPersonalInfoVO> usrInfoList = new ArrayList<>();
         try {
             SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
             // 返回结果
@@ -90,7 +89,7 @@ public class SearchServiceImpl implements SearchService {
                 String json = hit.getSourceAsString();
                 User user = JSON.parseObject(json, User.class);
                 log.info("搜索结果: {}",user);
-                UserPersonInfoVO vo = new UserPersonInfoVO();
+                UserPersonalInfoVO vo = new UserPersonalInfoVO();
                 BeanUtils.copyProperties(user,vo);
                 vo.setId(user.getId().toString());
                 usrInfoList.add(vo);

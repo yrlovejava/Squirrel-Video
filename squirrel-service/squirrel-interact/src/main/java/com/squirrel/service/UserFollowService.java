@@ -5,7 +5,7 @@ import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.follow.dtos.UserFollowDTO;
 import com.squirrel.model.follow.pojos.Follow;
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 
 import java.util.List;
 
@@ -40,13 +40,13 @@ public interface UserFollowService extends IService<Follow> {
      * 获取互关朋友列表
      * @return ResponseResult 互关朋友列表
      */
-    ResponseResult<List<UserPersonInfoVO>> getFriends();
+    ResponseResult<List<UserPersonalInfoVO>> getFriends();
 
     /**
      * 获取关注列表
      * @return ResponseResult 关注列表
      */
-    ResponseResult<List<UserPersonInfoVO>> getFollowList();
+    ResponseResult<List<UserPersonalInfoVO>> getFollowList();
 
     /**
      * 获取关注总数

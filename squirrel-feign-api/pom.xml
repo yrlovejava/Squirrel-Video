@@ -32,10 +32,10 @@
             <groupId>io.github.openfeign</groupId>
             <artifactId>feign-httpclient</artifactId>
         </dependency>
-        <!-- model 模块 -->
+        <!-- common 模块 -->
         <dependency>
             <groupId>com.squirrel</groupId>
-            <artifactId>squirrel-model</artifactId>
+            <artifactId>squirrel-common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>

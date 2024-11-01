@@ -96,4 +96,9 @@ public class VideoConstant {
      * 存当前用户应该看的 listId 的键
      */
     public static final String NOW_LIST_ID = "now_list_id:";
+
+    /**
+     * 最新的一个视频的id
+     */
+    public static final String LAST_VIDEO_ID = "last_video_id:";
 }

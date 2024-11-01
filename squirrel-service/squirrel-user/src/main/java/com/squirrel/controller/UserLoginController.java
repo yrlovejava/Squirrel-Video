@@ -3,6 +3,7 @@ package com.squirrel.controller;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.dtos.RegisterDTO;
 import com.squirrel.model.user.dtos.UserLoginDTO;
+import com.squirrel.model.user.vos.UserLoginVO;
 import com.squirrel.service.UserLoginService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,8 +36,13 @@ public class UserLoginController {
      * @param dto 登录信息
      * @return 登录结果
      */
-    @PostMapping()
-    public ResponseResult login(UserLoginDTO dto) {
+    @PostMapping
+    public ResponseResult<UserLoginVO> login(UserLoginDTO dto) {
         return userLoginService.login(dto);
+    }
+
+    @PostMapping("/logout")
+    public ResponseResult logout(){
+        return userLoginService.logout();
     }
 }

@@ -4,14 +4,13 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.squirrel.clients.IUserClient;
 import com.squirrel.constant.InteractConstant;
-import com.squirrel.constant.UserConstant;
 import com.squirrel.exception.*;
 import com.squirrel.mapper.UserFollowMapper;
 import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.follow.dtos.UserFollowDTO;
 import com.squirrel.model.follow.pojos.Follow;
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import com.squirrel.service.UserFollowService;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -202,7 +201,7 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
      * @return ResponseResult 互关朋友列表
      */
     @Override
-    public ResponseResult<List<UserPersonInfoVO>> getFriends() {
+    public ResponseResult<List<UserPersonalInfoVO>> getFriends() {
         // 1.获取当前用户id
         Long userId = ThreadLocalUtil.getUserId();
         if (userId == null){
@@ -228,7 +227,7 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
      * @return ResponseResult 关注列表
      */
     @Override
-    public ResponseResult<List<UserPersonInfoVO>> getFollowList() {
+    public ResponseResult<List<UserPersonalInfoVO>> getFollowList() {
         // 1.获取当前用户id
         Long userId = ThreadLocalUtil.getUserId();
         if (userId == null){

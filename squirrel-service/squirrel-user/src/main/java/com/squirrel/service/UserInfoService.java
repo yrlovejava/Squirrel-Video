@@ -2,8 +2,9 @@ package com.squirrel.service;
 
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.bos.UserPersonInfoBO;
+import com.squirrel.model.user.dtos.AckPasswordDTO;
 import com.squirrel.model.user.vos.UserHomePageVO;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public interface UserInfoService {
      * @param userId 用户id
      * @return ResponseResult<UserPersonalInfoVo> 用户个人信息
      */
-    ResponseResult<UserPersonInfoVO> getUserPersonInfo(Long userId);
+    ResponseResult<UserPersonalInfoVO> getUserPersonInfo(Long userId);
 
     /**
      * 更新用户个人信息
@@ -40,7 +41,7 @@ public interface UserInfoService {
      * @param ids 用户id集合
      * @return ResponseResult 个人信息集合
      */
-    ResponseResult<List<UserPersonInfoVO>> getUserPersonInfos(Set<String> ids);
+    ResponseResult<List<UserPersonalInfoVO>> getUserPersonInfos(Set<String> ids);
 
     /**
      * 获取用户主页信息
@@ -48,4 +49,11 @@ public interface UserInfoService {
      * @return ResponseResult<UserHomePageVO> 用户主页信息
      */
     ResponseResult<UserHomePageVO> homeUser(Long userId);
+
+    /**
+     * 校验密码
+     * @param dto 密码dto
+     * @return ResponseResult<Boolean> 校验结果
+     */
+    ResponseResult<Boolean> ackPassword(AckPasswordDTO dto);
 }

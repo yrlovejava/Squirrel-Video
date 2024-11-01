@@ -5,7 +5,7 @@ import com.alibaba.fastjson2.JSON;
 import com.squirrel.constant.UserConstant;
 import com.squirrel.mapper.UserMapper;
 import com.squirrel.model.user.pojos.User;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.BeanUtils;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,7 +28,7 @@ public class UserInfoTest {
     public void addInfos() {
         for(int i = 0;i < 100;i++){
             User user = new User();
-            UserPersonInfoVO vo = new UserPersonInfoVO();
+            UserPersonalInfoVO vo = new UserPersonalInfoVO();
             user.setUsername(UUID.randomUUID().toString().substring(0,10));
             Random random = new Random();
             String prefix = "1" + (random.nextInt(7) + 3); // 生成手机号前两位

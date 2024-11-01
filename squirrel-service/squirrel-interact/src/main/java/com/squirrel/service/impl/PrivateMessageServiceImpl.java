@@ -14,7 +14,7 @@ import com.squirrel.model.message.pojos.PrivateMessage;
 import com.squirrel.model.message.vos.MessageListVO;
 import com.squirrel.model.message.vos.MessageVO;
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import com.squirrel.service.PrivateMessageService;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -270,8 +270,8 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         List<ChatVO> chatVoList = new ArrayList<>();
         for (String chatUserId : chatList) {
             long otherId = Long.parseLong(chatUserId);
-            UserPersonInfoVO userPersonInfoVO = userClient.getUserPersonInfo(otherId).getData();
-            if (userPersonInfoVO == null){
+            UserPersonalInfoVO userPersonalInfoVO = userClient.getUserPersonInfo(otherId).getData();
+            if (userPersonalInfoVO == null){
                 continue;
             }
             // 4.1生成key "private_message【小id】-【大id】:"
@@ -285,9 +285,9 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
             MessageVO messageVO = JSON.parseObject(message, MessageVO.class);
             ChatVO chatVO = ChatVO.builder()
                     .id(Long.toString(otherId))
-                    .username(userPersonInfoVO.getUsername())
-                    .image(userPersonInfoVO.getImage())
-                    .signature(userPersonInfoVO.getSignature())
+                    .username(userPersonalInfoVO.getUsername())
+                    .image(userPersonalInfoVO.getImage())
+                    .signature(userPersonalInfoVO.getSignature())
                     .latestMessage(messageVO.getMessageContent())
                     .build();
             chatVoList.add(chatVO);

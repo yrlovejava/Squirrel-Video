@@ -8,13 +8,8 @@ import com.squirrel.exception.*;
 import com.squirrel.mapper.CommentMapper;
 import com.squirrel.model.comment.Comment;
 import com.squirrel.model.response.ResponseResult;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
 import com.squirrel.model.video.pojos.Video;
-import com.squirrel.model.video.pojos.VideoLike;
 import com.squirrel.model.video.pojos.VideoList;
-import com.squirrel.model.video.vos.VideoDetail;
-import com.squirrel.model.video.vos.VideoInfo;
-import com.squirrel.model.video.vos.VideoListVO;
 import com.squirrel.service.DbOpsService;
 import com.squirrel.service.VideoDoLikeService;
 import com.squirrel.service.VideoUploadService;
@@ -22,8 +17,6 @@ import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -256,52 +249,6 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
     }
 
     /**
-     * 是否点赞
-     *
-     * @param videoId 视频id
-     * @return ResponseResult 是否点赞
-     */
-    @Override
-    public ResponseResult isLike(Long videoId) {
-        // 1.校验参数
-        if (videoId == null) {
-            throw new NullParamException();
-        }
-
-        // 2.获取当前用户id
-        Long userId = ThreadLocalUtil.getUserId();
-        if (userId == null) {
-            throw new UserNotLoginException();
-        }
-
-        // 3.获取key
-        String setLikeKey = VideoConstant.SET_LIKE_KEY + videoId;
-
-        // 4.查询是否存在
-        Boolean hasKey = stringRedisTemplate.hasKey(setLikeKey);
-        if (Boolean.TRUE.equals(hasKey)) {
-            // 如果redis中存在
-            // 直接在redis中查询
-            Boolean isMember = stringRedisTemplate.opsForSet().isMember(setLikeKey, userId.toString());
-            if (Boolean.FALSE.equals(isMember)) {
-                return ResponseResult.successResult(0);
-            }
-            return ResponseResult.successResult(1);
-        }
-        // 在redis中不存在，就从mongoDB中查找
-        Criteria criteria = Criteria
-                .where("userId").is(userId.toString())
-                .and("videoId").is(videoId.toString());
-        Query query = Query.query(criteria);
-        VideoLike one = mongoTemplate.findOne(query, VideoLike.class);
-        // 如果此字段不存在，直接返回0
-        if (one == null || one.getIsLike() == 0) {
-            return ResponseResult.successResult(0);
-        }
-        return ResponseResult.successResult(1);
-    }
-
-    /**
      * 获取用户被的点赞数
      *
      * @param userId 用户id
@@ -520,7 +467,7 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
 
         // 4.向redis中保存数据
         // 4.1获取key
-        String key = VideoConstant.STRING_COLLECT_KEY + videoId;
+        String key = VideoConstant.STRING_COMMENT_KEY + videoId;
         dbOpsService.addIntSafely(key,1);
 
         // 5.返回操作成功

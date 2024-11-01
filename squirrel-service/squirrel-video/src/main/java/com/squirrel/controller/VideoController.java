@@ -81,16 +81,6 @@ public class VideoController {
     }
 
     /**
-     * 是否点赞
-     * @param videoId 视频id
-     * @return ResponseResult 是否点赞
-     */
-    @GetMapping("/isLike")
-    public ResponseResult isLike(Long videoId){
-        return videoDoLikeService.isLike(videoId);
-    }
-
-    /**
      * 得到用户被赞数
      * @param userId 用户id
      * @return ResponseResult<Integer> 用户被赞数
@@ -136,7 +126,7 @@ public class VideoController {
      * @return ResponseResult 收藏过的所有视频
      */
     @GetMapping("/showCollectList")
-    public ResponseResult<VideoList> collects(Integer currentPage, Integer userId) {
+    public ResponseResult<VideoList> showCollectList(Integer currentPage, Integer userId) {
         return videoDoLikeService.showCollectsList(currentPage,userId);
     }
 
@@ -159,7 +149,7 @@ public class VideoController {
      * @return ResponseResult 评论集合
      */
     @GetMapping("/getCommentList")
-    public ResponseResult doComment(Long commentId,Long videoId) {
+    public ResponseResult getCommentList(Long commentId,Long videoId) {
         return videoDoLikeService.getCommentList(commentId,videoId);
     }
 }

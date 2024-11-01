@@ -10,18 +10,21 @@ import com.squirrel.exception.*;
 import com.squirrel.mapper.UserMapper;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.bos.UserPersonInfoBO;
+import com.squirrel.model.user.dtos.AckPasswordDTO;
 import com.squirrel.model.user.pojos.User;
 import com.squirrel.model.user.vos.UserHomePageVO;
-import com.squirrel.model.user.vos.UserPersonInfoVO;
+import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import com.squirrel.service.FileStorageService;
 import com.squirrel.service.UserInfoService;
 import com.squirrel.utils.FileUtil;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -53,13 +56,16 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Resource
     private IVideoClient videoClient;
 
+    @Resource
+    private RocketMQTemplate rocketMQTemplate;
+
     /**
      * 获取用户个人信息
      * @param userId 用户id
      * @return ResponseResult<UserPersonalInfoVo> 用户个人信息
      */
     @Override
-    public ResponseResult<UserPersonInfoVO> getUserPersonInfo(Long userId) {
+    public ResponseResult<UserPersonalInfoVO> getUserPersonInfo(Long userId) {
         // 1.获取到用户的id，如果为空，则说明是查自己，从 ThreadLocal 中获取
         if (userId == null) {
             userId = ThreadLocalUtil.getUserId();
@@ -76,7 +82,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         String userInfoRedis = stringRedisTemplate.opsForValue().get(UserConstant.REDIS_USER_INFO + userId);
         if (userInfoRedis != null){
             // redis 中存在用户信息，直接返回
-            UserPersonInfoVO vo = JSON.parseObject(userInfoRedis, UserPersonInfoVO.class);
+            UserPersonalInfoVO vo = JSON.parseObject(userInfoRedis, UserPersonalInfoVO.class);
             return ResponseResult.successResult(vo);
         }
 
@@ -95,11 +101,12 @@ public class UserInfoServiceImpl implements UserInfoService {
         }
 
         // 7.属性拷贝
-        UserPersonInfoVO vo = new UserPersonInfoVO();
+        UserPersonalInfoVO vo = new UserPersonalInfoVO();
         BeanUtils.copyProperties(user,vo);
         vo.setId(user.getId().toString());
 
         // 8.存入redis中
+        // 这里存入redis的原因是方便之后会频繁查询user的部分信息，比如每个视频需要用户头像和名字，这时候反复操作数据库数据库压力很大
         // TODO: 测试之后发现在 100个关注对象下，从redis中遍历查询的效率远不如从数据库批量查询，所以这里用户信息的存储需要优化
         // 直接从数据库批量查询，耗时 352ms
         // 循环从redis中查询，耗时 1.34 s
@@ -154,7 +161,10 @@ public class UserInfoServiceImpl implements UserInfoService {
             throw new ErrorParamException("用户不存在！");
         }
 
-        // 4.返回成功
+        // 4.发送消息到消息队列，ES索引库中更新用户信息
+        rocketMQTemplate.convertAndSend("user_info",user);
+
+        // 5.返回成功
         return ResponseResult.successResult();
     }
 
@@ -220,7 +230,7 @@ public class UserInfoServiceImpl implements UserInfoService {
      * @return ResponseResult 个人信息集合
      */
     @Override
-    public ResponseResult<List<UserPersonInfoVO>> getUserPersonInfos(Set<String> ids) {
+    public ResponseResult<List<UserPersonalInfoVO>> getUserPersonInfos(Set<String> ids) {
         // 1.查询数据库
         List<User> users = userMapper.selectList(Wrappers.<User>lambdaQuery()
                 .select(User::getId, User::getUsername, User::getImage, User::getSignature)
@@ -231,8 +241,8 @@ public class UserInfoServiceImpl implements UserInfoService {
         }
 
         // 2.封装vo
-        List<UserPersonInfoVO> vos = users.stream().map(u -> {
-            UserPersonInfoVO vo = new UserPersonInfoVO();
+        List<UserPersonalInfoVO> vos = users.stream().map(u -> {
+            UserPersonalInfoVO vo = new UserPersonalInfoVO();
             BeanUtils.copyProperties(u, vo);
             return vo;
         }).collect(Collectors.toList());
@@ -263,11 +273,11 @@ public class UserInfoServiceImpl implements UserInfoService {
         log.info("用户个人信息查询: {}",userId);
 
         // 2. 获取基本信息
-        ResponseResult<UserPersonInfoVO> userPersonalInfoVoResponseResult = getUserPersonInfo(userId);
+        ResponseResult<UserPersonalInfoVO> userPersonalInfoVoResponseResult = getUserPersonInfo(userId);
         if (userPersonalInfoVoResponseResult == null || userPersonalInfoVoResponseResult.getData() == null){
             throw new UserNotExitedException();
         }
-        UserPersonInfoVO userPersonInfoVO = userPersonalInfoVoResponseResult.getData();
+        UserPersonalInfoVO userPersonalInfoVO = userPersonalInfoVoResponseResult.getData();
         // 3.1 获取关注数
         Integer followNum = interactClient.getFollowNum(userId).getData();
         // 3.2 获取粉丝数
@@ -281,7 +291,7 @@ public class UserInfoServiceImpl implements UserInfoService {
 
         // 4.封装vo
         UserHomePageVO vo = new UserHomePageVO();
-        BeanUtils.copyProperties(userPersonInfoVO,vo);
+        BeanUtils.copyProperties(userPersonalInfoVO,vo);
         vo.setId(userId); // id
         vo.setFollowNum(followNum); // 关注数量
         vo.setFansNum(fansNum); // 粉丝数量
@@ -291,5 +301,32 @@ public class UserInfoServiceImpl implements UserInfoService {
 
         // 5.返回 vo
         return ResponseResult.successResult(vo);
+    }
+
+    /**
+     * 校验密码
+     * @param dto 密码dto
+     * @return ResponseResult<Boolean> 校验结果
+     */
+    @Override
+    public ResponseResult<Boolean> ackPassword(AckPasswordDTO dto) {
+        // 1.参数校验
+        if (dto == null || dto.getPassword() == null || dto.getUserId() == null) {
+            throw new NullParamException();
+        }
+
+        // 2.从数据库中获取用户信息
+        User user = userMapper.selectById(dto.getUserId());
+        if (user == null) {
+            throw new UserNotExitedException();
+        }
+
+        // 3.校验密码是否正确
+        String md5 = DigestUtils.md5DigestAsHex((dto.getPassword() + user.getSalt()).getBytes());
+        if (!md5.equals(user.getPassword())){
+            throw new PasswordErrorException();
+        }
+
+        return ResponseResult.successResult(Boolean.TRUE);
     }
 }
