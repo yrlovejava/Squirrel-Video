@@ -1,13 +1,11 @@
 package com.squirrel.model.video.vos;
 
-import lombok.Builder;
 import lombok.Data;
 
 /**
  * 视频简略信息
  */
 @Data
-@Builder
 public class VideoInfo {
 
     /**

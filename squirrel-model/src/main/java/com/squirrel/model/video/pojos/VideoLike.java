@@ -13,34 +13,34 @@ public class VideoLike implements Serializable {
     /**
      * 主键
      */
-    public String id;
+    private String id;
 
     /**
      * 用户id
      */
-    public Long userId;
+    private Long userId;
 
     /**
      * 视频id
      */
-    public Long videoId;
+    private Long videoId;
 
     /**
      * 是否点赞
      * 1 是
      * 0 否
      */
-    public Integer isLike;
+    private Integer isLike;
 
     /**
      * 是否收藏
      * 1 是
      * 0 否
      */
-    public Integer isCollect;
+    private Integer isCollect;
 
     /**
      * 评论
      */
-    public List<String> commentList;
+    private List<String> commentList;
 }

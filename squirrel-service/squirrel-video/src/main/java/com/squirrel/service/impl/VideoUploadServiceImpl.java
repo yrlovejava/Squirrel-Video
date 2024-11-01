@@ -13,6 +13,8 @@ import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.vos.UserPersonInfoVO;
 import com.squirrel.model.video.dtos.VideoPublishDTO;
 import com.squirrel.model.video.pojos.*;
+import com.squirrel.model.video.vos.VideoDetail;
+import com.squirrel.model.video.vos.VideoInfo;
 import com.squirrel.model.video.vos.VideoUploadVO;
 import com.squirrel.service.DbOpsService;
 import com.squirrel.service.FileStorageService;
@@ -203,7 +205,7 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
             String format = video.getCreateTime().format(df);
             videoDetailInfo.setCreateTime(format);
             // 判断是否喜欢
-            videoDetailInfo.setLike(this.isLike((long) i));
+            videoDetailInfo.setLiked(this.isLike((long) i));
             // 得到作者信息
             ResponseResult<UserPersonInfoVO> res = userClient.getUserPersonInfo(video.getAuthorId());
             UserPersonInfoVO user = res.getData();
@@ -291,6 +293,102 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
         video.setComments(comments == null ? 0 : Long.parseLong(comments));
 
         return video;
+    }
+
+    /**
+     * 远程接口，获取视频信息
+     * @param videoId 视频id
+     * @return ResponseResult<VideoInfo> 视频信息
+     */
+    @Override
+    public ResponseResult<VideoInfo> getVideoInfo(Long videoId) {
+        log.info("获取视频信息，视频id：{}",videoId);
+        // 1.校验参数
+        if (videoId == null){
+            throw new NullParamException();
+        }
+
+        // 2.查询
+        Video video = this.getVideoById(videoId.intValue());
+        VideoInfo videoInfo = new VideoInfo();
+        BeanUtils.copyProperties(video, videoInfo);
+
+        // 3.返回结果
+        return ResponseResult.successResult(videoInfo);
+    }
+
+    /**
+     * 远程接口，获取视频详细信息
+     * @param videoId 视频id
+     * @return ResponseResult<VideoDetail> 视频详细信息
+     */
+    @Override
+    public ResponseResult<VideoDetail> getVideoDetailInfo(Long videoId) {
+        log.info("获取视频详细信息，视频id：{}",videoId);
+        // 1.校验参数
+        if (videoId == null){
+            throw new NullParamException();
+        }
+
+        // 2.查询视频
+        Video video = this.getVideoById(videoId.intValue());
+        VideoDetail videoDetail = new VideoDetail();
+
+        // 3.填充属性
+        BeanUtils.copyProperties(video, videoDetail);
+        // 作者id和视频id要转换为string
+        videoDetail.setAuthorId(video.getAuthorId().toString());
+        videoDetail.setVideoId(video.getId().toString());
+        // 判断是否喜欢与收藏
+        boolean isLiked = isDo(videoId, VideoConstant.SET_LIKE_KEY + video.getId());
+        videoDetail.setIsLiked(isLiked);
+        boolean isCollected = isDo(videoId, VideoConstant.SET_COLLECT_KEY + video.getId());
+        videoDetail.setIsCollected(isCollected);
+        // 得到作者信息
+        log.info("获取作者信息，作者id: {}",video.getAuthorId());
+        ResponseResult<UserPersonInfoVO> res = userClient.getUserPersonInfo(video.getAuthorId());
+        log.info("获取作者信息，结果: {}",res);
+        UserPersonInfoVO user = res.getData();
+        // 名字
+        videoDetail.setUserName(user.getUsername());
+        // 头像
+        videoDetail.setImage(user.getImage());
+
+        return ResponseResult.successResult(videoDetail);
+    }
+
+    /**
+     * 判断是否点赞或收藏
+     * @param videoId 视频id
+     * @param setLikeKey set集合的key
+     * @return 是否点赞或收藏
+     */
+    private boolean isDo(Long videoId,String setLikeKey) {
+        // 1.参数校验
+        if (videoId == null || setLikeKey == null) {
+            throw new NullParamException();
+        }
+
+        // 2.获取当前用户id
+        Long userId = ThreadLocalUtil.getUserId();
+        if (userId == null) {
+            throw new UserNotLoginException();
+        }
+
+        // 3.判断key是否存在
+        Boolean hasKey = stringRedisTemplate.hasKey(setLikeKey);
+        if(Boolean.TRUE.equals(hasKey)){
+            // 如果userId在set中，说明已经点赞
+            Boolean isMember = stringRedisTemplate.opsForSet().isMember(setLikeKey, userId);
+            return Boolean.TRUE.equals(isMember);
+        }else {
+            // 4.key不存在那就从mongoDB中查
+            Criteria criteria = Criteria
+                    .where("userId").is(userId.toString())
+                    .and("videoId").is(videoId.toString());
+            VideoLike one = mongoTemplate.findOne(Query.query(criteria), VideoLike.class);
+            return one != null && one.getIsLike() != 0;
+        }
     }
 
     /**

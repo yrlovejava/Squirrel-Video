@@ -1,6 +1,6 @@
 package com.squirrel.model.video.vos;
 
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
  * 视频详细信息
  */
 @Data
-@Builder
 public class VideoDetail {
 
     /**
@@ -55,7 +54,7 @@ public class VideoDetail {
     /**
      * 作者昵称
      */
-    private String username;
+    private String userName;
 
     /**
      * 作者头像
@@ -65,5 +64,6 @@ public class VideoDetail {
     /**
      * 视频发布时间
      */
+    @JsonFormat(shape = JsonFormat.Shape.STRING,pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
 }

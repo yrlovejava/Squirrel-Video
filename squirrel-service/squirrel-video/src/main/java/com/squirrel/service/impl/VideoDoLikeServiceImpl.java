@@ -12,6 +12,8 @@ import com.squirrel.model.user.vos.UserPersonInfoVO;
 import com.squirrel.model.video.pojos.Video;
 import com.squirrel.model.video.pojos.VideoLike;
 import com.squirrel.model.video.pojos.VideoList;
+import com.squirrel.model.video.vos.VideoDetail;
+import com.squirrel.model.video.vos.VideoInfo;
 import com.squirrel.model.video.vos.VideoListVO;
 import com.squirrel.service.DbOpsService;
 import com.squirrel.service.VideoDoLikeService;

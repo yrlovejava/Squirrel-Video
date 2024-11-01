@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.dtos.VideoPublishDTO;
 import com.squirrel.model.video.pojos.Video;
+import com.squirrel.model.video.vos.VideoDetail;
+import com.squirrel.model.video.vos.VideoInfo;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -38,4 +40,18 @@ public interface VideoUploadService extends IService<Video> {
      * @return 视频实体类
      */
     Video getVideoById(Integer videoId);
+
+    /**
+     * 远程接口，获取视频信息
+     * @param videoId 视频id
+     * @return ResponseResult<VideoInfo> 视频信息
+     */
+    ResponseResult<VideoInfo> getVideoInfo(Long videoId);
+
+    /**
+     * 远程接口，获取视频详细信息
+     * @param videoId 视频id
+     * @return ResponseResult<VideoDetail> 视频详细信息
+     */
+    ResponseResult<VideoDetail> getVideoDetailInfo(Long videoId);
 }

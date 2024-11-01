@@ -5,6 +5,7 @@ import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.vos.VideoDetail;
 import com.squirrel.model.video.vos.VideoInfo;
 import com.squirrel.service.VideoDoLikeService;
+import com.squirrel.service.VideoUploadService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +20,9 @@ public class VideoClient implements IVideoClient {
 
     @Resource
     private VideoDoLikeService videoDoLikeService;
+
+    @Resource
+    private VideoUploadService videoUploadService;
 
     /**
      * 得到用户被赞数
@@ -50,7 +54,7 @@ public class VideoClient implements IVideoClient {
     @GetMapping("/info")
     @Override
     public ResponseResult<VideoInfo> getVideoInfo(Long videoId) {
-        return null;
+        return videoUploadService.getVideoInfo(videoId);
     }
 
     /**
@@ -61,6 +65,6 @@ public class VideoClient implements IVideoClient {
     @GetMapping("/detailInfo")
     @Override
     public ResponseResult<VideoDetail> getVideoDetailInfo(Long videoId) {
-        return null;
+        return videoUploadService.getVideoDetailInfo(videoId);
     }
 }

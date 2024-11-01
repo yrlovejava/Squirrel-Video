@@ -3,6 +3,8 @@ package com.squirrel.service;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.pojos.Video;
 import com.squirrel.model.video.pojos.VideoList;
+import com.squirrel.model.video.vos.VideoDetail;
+import com.squirrel.model.video.vos.VideoInfo;
 
 import java.util.List;
 
@@ -93,4 +95,5 @@ public interface VideoDoLikeService {
      * @return ResponseResult 评论集合
      */
     ResponseResult getCommentList(Long commentId, Long videoId);
+
 }
