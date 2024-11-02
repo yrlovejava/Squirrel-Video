@@ -322,69 +322,47 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
     }
 
     /**
-     * 获取用户发布过的所有视频
-     *
+     * 获取用户发布的所有视频
+     * @param currentPage 当前页
      * @param userId 用户id
-     * @return ResponseResult<List < Video>> 用户发布过的所有视频
+     * @return ResponseResult<VideoList> 视频列表
      */
     @Override
-    public ResponseResult<List<Video>> getAllVideos(Long userId) {
-        // 1.参数校验
-        if (userId == null) {
+    public ResponseResult<VideoList> getPublishedVideos(Integer currentPage, Integer userId) {
+        // 1.校验参数
+        if (currentPage == null || userId == null){
             throw new NullParamException();
         }
 
-        // 2.获取key
-        String userVideoKey = VideoConstant.USER_VIDEO_SET_LIST + userId;
+        // 2.获取对应的key
+        String key = VideoConstant.USER_VIDEO_SET_LIST + userId;
 
-        // 3.查询redis
-        Set<String> videoIds = stringRedisTemplate.opsForSet().members(userVideoKey);
-        if (videoIds == null || videoIds.isEmpty()) {
-            return ResponseResult.successResult(Collections.emptyList());
+        // 3.得到用户发布的当前页数的videoIds
+        List<String> videoIds = stringRedisTemplate.opsForList().range(key, (currentPage - 1) * 10L, currentPage * 10 - 1);
+        if (videoIds == null) {
+            return ResponseResult.successResult(new VideoList());
         }
 
-        // 4.封装返回结果
+        // 4.查询video
         List<Video> videos = new ArrayList<>();
+        // 得到 videoId 对应的实体类
         for (String videoId : videoIds) {
             Video video = videoUploadService.getVideoById(Integer.parseInt(videoId));
-            if (video == null) {
+            if (video != null) {
                 videos.add(video);
             }
         }
 
-        // 5.返回所有视频
-        return ResponseResult.successResult(videos);
+        // 5.封装返回
+        VideoList videoList = new VideoList();
+        videoList.setVideoList(videos);
+        // 得到视频总数
+        Long total = Objects.requireNonNull(stringRedisTemplate.opsForList().size(key));
+        videoList.setTotal(total.intValue());
+
+        return ResponseResult.successResult(videoList);
     }
 
-    /**
-     * 得到用户收藏过的所有视频
-     *
-     * @return ResponseResult 用户收藏过的所有视频
-     */
-    @Override
-    public ResponseResult showLikesList() {
-        // 1.获取当前用户的id
-        Long userId = ThreadLocalUtil.getUserId();
-        if (userId == null) {
-            throw new UserNotLoginException();
-        }
-
-        // 2.查询redis
-        Set<String> videoIds = stringRedisTemplate.opsForSet().members(VideoConstant.USER_SET_LIKE_KEY + userId);
-        if (videoIds == null || videoIds.isEmpty()) {
-            return ResponseResult.successResult(Collections.emptyList());
-        }
-
-        // 3.获取video
-        List<Video> list = new ArrayList<>();
-        for (String videoId : videoIds) {
-            Video video = videoUploadService.getVideoById(Integer.parseInt(videoId));
-            list.add(video);
-        }
-
-        // 4.返回结果
-        return ResponseResult.successResult(list);
-    }
 
     /**
      * 得到用户收藏过的所有视频

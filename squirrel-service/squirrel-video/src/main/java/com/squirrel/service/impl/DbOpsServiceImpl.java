@@ -24,6 +24,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 数据库操作的实现类，包括 redis 和 mongoDB
@@ -45,6 +49,18 @@ public class DbOpsServiceImpl implements DbOpsService {
      * 增加值的 Lua 脚本
      */
     private static final DefaultRedisScript<Long> ADD_INT_SAFELY_SCRIPT;
+
+    /**
+     * 刷新数据到mysql的线程池
+     */
+    private static final ExecutorService REFRESH_POOL = new ThreadPoolExecutor(
+            3,// like collect comment
+            6,
+            60L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingDeque<>(10),
+            new ThreadPoolExecutor.CallerRunsPolicy()
+    );
 
     static {
         ADD_INT_SAFELY_SCRIPT = new DefaultRedisScript<>();
@@ -150,57 +166,17 @@ public class DbOpsServiceImpl implements DbOpsService {
 
         if(!likeKeys.isEmpty()){
             // 更新点赞数
-            for (String likeKey : likeKeys) {
-                // 获取 videoId
-                String sub = likeKey.substring(VideoConstant.STRING_LIKE_KEY.length());
-                long videoId = Long.parseLong(sub);
-                // 创建新的video对象
-                Video video = new Video();
-                video.setId(videoId);
-                // 获取点赞数
-                String likes = stringRedisTemplate.opsForValue().get(likeKey);
-                long likesNum = Long.parseLong(likes == null ? "0" : likes);
-                video.setLikes(likesNum);
-                // 刷新到数据库
-                videoMapper.updateById(video);
-            }
+            REFRESH_POOL.submit(() -> new RefreshTask(likeKeys,0));
         }
 
         if (!collectKeys.isEmpty()){
             // 更新收藏数
-            for (String collectKey : collectKeys) {
-                // 获取 videoId
-                String sub = collectKey.substring(VideoConstant.STRING_COLLECT_KEY.length());
-                long videoId = Long.parseLong(sub);
-                // 创建新的video对象
-                Video video = new Video();
-                video.setId(videoId);
-                // 获取收藏数
-                String collects = stringRedisTemplate.opsForValue().get(collectKey);
-                long collectsNum = Long.parseLong(collects == null ? "0" : collects);
-                video.setCollects(collectsNum);
-                // 更新数据库
-                videoMapper.updateById(video);
-            }
+            REFRESH_POOL.submit(() -> new RefreshTask(collectKeys,1));
         }
 
         if (!commentKeys.isEmpty()){
             // 更新评论数
-            for (String commentKey : commentKeys) {
-                // 得到videoId
-                // 获取 videoId
-                String sub = commentKey.substring(VideoConstant.STRING_COLLECT_KEY.length());
-                long videoId = Long.parseLong(sub);
-                // 创建新的video对象
-                Video video = new Video();
-                video.setId(videoId);
-                // 获取收藏数
-                String comments = stringRedisTemplate.opsForValue().get(commentKey);
-                long commentNum = Long.parseLong(comments == null ? "0" : comments);
-                video.setCollects(commentNum);
-                // 更新数据库
-                videoMapper.updateById(video);
-            }
+            REFRESH_POOL.submit(() -> new RefreshTask(commentKeys,2));
         }
     }
 
@@ -232,5 +208,87 @@ public class DbOpsServiceImpl implements DbOpsService {
         }
 
         return keys;
+    }
+
+    /**
+     * 刷新数据到 mysql 中的任务
+     */
+    private class RefreshTask implements Runnable{
+
+        /**
+         * key的列表
+         */
+        private Set<String> keys;
+
+        /**
+         * 类型
+         * 0 like
+         * 1 collect
+         * 2 comment
+         */
+        private Integer type;
+
+        public RefreshTask(Set<String> keys, Integer type) {
+            this.keys = keys;
+            this.type = type;
+        }
+
+        @Override
+        public void run() {
+            switch (type) {
+                case 0:
+                    // 更新点赞数
+                    for (String likeKey : keys) {
+                        // 获取 videoId
+                        String sub = likeKey.substring(VideoConstant.STRING_LIKE_KEY.length());
+                        long videoId = Long.parseLong(sub);
+                        // 创建新的video对象
+                        Video video = new Video();
+                        video.setId(videoId);
+                        // 获取点赞数
+                        String likes = stringRedisTemplate.opsForValue().get(likeKey);
+                        long likesNum = Long.parseLong(likes == null ? "0" : likes);
+                        video.setLikes(likesNum);
+                        // 刷新到数据库
+                        videoMapper.updateById(video);
+                    }
+                    break;
+                case 1:
+                    // 更新收藏数
+                    for (String collectKey : keys) {
+                        // 获取 videoId
+                        String sub = collectKey.substring(VideoConstant.STRING_COLLECT_KEY.length());
+                        long videoId = Long.parseLong(sub);
+                        // 创建新的video对象
+                        Video video = new Video();
+                        video.setId(videoId);
+                        // 获取收藏数
+                        String collects = stringRedisTemplate.opsForValue().get(collectKey);
+                        long collectsNum = Long.parseLong(collects == null ? "0" : collects);
+                        video.setCollects(collectsNum);
+                        // 更新数据库
+                        videoMapper.updateById(video);
+                    }
+                    break;
+                case 2:
+                    // 更新评论数
+                    for (String commentKey : keys) {
+                        // 得到videoId
+                        // 获取 videoId
+                        String sub = commentKey.substring(VideoConstant.STRING_COLLECT_KEY.length());
+                        long videoId = Long.parseLong(sub);
+                        // 创建新的video对象
+                        Video video = new Video();
+                        video.setId(videoId);
+                        // 获取收藏数
+                        String comments = stringRedisTemplate.opsForValue().get(commentKey);
+                        long commentNum = Long.parseLong(comments == null ? "0" : comments);
+                        video.setCollects(commentNum);
+                        // 更新数据库
+                        videoMapper.updateById(video);
+                    }
+                    break;
+            }
+        }
     }
 }

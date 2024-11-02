@@ -24,10 +24,12 @@ import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.BeanUtils;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,6 +39,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -64,6 +67,20 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
 
     @Resource
     private RocketMQTemplate rocketMQTemplate;
+
+    /**
+     * 发布视频的lua脚本
+     */
+    private static final DefaultRedisScript<Long> PUBLISH_SCRIPT;
+
+    /*
+     * 初始化脚本
+     */
+    static {
+        PUBLISH_SCRIPT = new DefaultRedisScript<>();
+        PUBLISH_SCRIPT.setLocation(new ClassPathResource("lua/publish.lua"));
+        PUBLISH_SCRIPT.setResultType(Long.class);
+    }
 
     /**
      * 发布视频
@@ -94,9 +111,7 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
         if (dto.getCoverUrl() == null || dto.getCoverUrl().isEmpty()) {
             dto.setCoverUrl("?vframe/jpg/offset/0");
         }
-        // 获取当前时间并格式化
-        String format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                .format(System.currentTimeMillis());
+
 
         // 2.获取用户id
         Long userId = ThreadLocalUtil.getUserId();
@@ -121,11 +136,18 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
             save(video);
             // 5.保存在redis
             // 5.1获取key
-            String videoKey = VideoConstant.VIDEO_LIST_KEY + video.getId();
-            // 5.2将视频存储在对应videoId下
-            stringRedisTemplate.opsForList().leftPush(videoKey, JSON.toJSONString(video));
-            // 5.3存储在 userId 下的videoId
-            stringRedisTemplate.opsForList().leftPush(VideoConstant.USER_VIDEO_SET_LIST + userId, video.getId().toString());
+            String videoKey = VideoConstant.VIDEO_ID + video.getId();
+            String lastVideoIdKey = VideoConstant.LAST_VIDEO_ID;
+            String userVideoKey = VideoConstant.USER_VIDEO_SET_LIST + userId;
+            List<String> keys = Arrays.asList(videoKey,lastVideoIdKey,userVideoKey);
+            Object[] values = {JSON.toJSONString(video), video.getId().toString()};
+            // 5.2执行lua脚本
+            stringRedisTemplate.execute(PUBLISH_SCRIPT,keys,values);
+//            // 5.2将视频存储在对应videoId下
+//            stringRedisTemplate.opsForValue().set(videoKey,JSON.toJSONString(video));
+//            stringRedisTemplate.opsForValue().set(VideoConstant.LAST_VIDEO_ID,video.getId().toString());
+//            // 5.3存储在 userId 下的videoId
+//            stringRedisTemplate.opsForList().leftPush(VideoConstant.USER_VIDEO_SET_LIST + userId, video.getId().toString());
 
             // 6.异步更新ES
             rocketMQTemplate.convertAndSend("video_publish", video);

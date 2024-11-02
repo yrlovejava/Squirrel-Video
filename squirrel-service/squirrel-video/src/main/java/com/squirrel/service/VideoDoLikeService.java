@@ -31,13 +31,6 @@ public interface VideoDoLikeService {
     ResponseResult collect(Long videoId,Long authorId,int type);
 
     /**
-     * 是否点赞
-     * @param videoId 视频id
-     * @return ResponseResult 是否点赞
-     */
-    ResponseResult isLike(Long videoId);
-
-    /**
      * 获取用户被点赞数量
      * @param userId 用户id
      * @return 点赞数量
@@ -53,16 +46,11 @@ public interface VideoDoLikeService {
 
     /**
      * 获取用户发布过的所有视频
+     * @param currentPage 当前页
      * @param userId 用户id
-     * @return ResponseResult<List<Video>> 用户发布过的所有视频
+     * @return ResponseResult<VideoList> 视频列表
      */
-    ResponseResult<List<Video>> getAllVideos(Long userId);
-
-    /**
-     * 得到用户收藏过的所有视频
-     * @return ResponseResult 用户收藏过的所有视频
-     */
-    ResponseResult showLikesList();
+    ResponseResult<VideoList> getPublishedVideos(Integer currentPage,Integer userId);
 
     /**
      * 得到用户收藏过的所有视频

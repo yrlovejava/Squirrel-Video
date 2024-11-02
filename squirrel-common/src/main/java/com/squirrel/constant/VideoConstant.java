@@ -90,7 +90,7 @@ public class VideoConstant {
     /**
      * 存视频的链表头
      */
-    public static final String VIDEO_LIST_KEY = "video_list:";
+    public static final String USER_VIDEO_LIST_KEY = "user_video_list:";
 
     /**
      * 存当前用户应该看的 listId 的键

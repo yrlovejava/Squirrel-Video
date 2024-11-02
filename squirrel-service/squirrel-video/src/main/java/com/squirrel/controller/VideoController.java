@@ -2,7 +2,6 @@ package com.squirrel.controller;
 
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.dtos.VideoPublishDTO;
-import com.squirrel.model.video.pojos.Video;
 import com.squirrel.model.video.pojos.VideoList;
 import com.squirrel.service.VideoDoLikeService;
 import com.squirrel.service.VideoUploadService;
@@ -10,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.util.List;
+
 
 /**
  * 视频相关功能控制器
@@ -31,7 +30,7 @@ public class VideoController {
      * @return ResponseResult 上传结果
      */
     @PostMapping("/publish")
-    public ResponseResult pulish(VideoPublishDTO dto){
+    public ResponseResult publish(VideoPublishDTO dto){
         return videoUploadService.publish(dto);
     }
 
@@ -102,21 +101,13 @@ public class VideoController {
 
     /**
      * 得到用户发布过的视频
+     * @param currentPage 当前页
      * @param userId 用户id
      * @return ResponseResult<List<Video>> 用户发布过的所有视频
      */
-    @GetMapping("/getAllVideos")
-    public ResponseResult<List<Video>> getAllVideos(Long userId) {
-        return videoDoLikeService.getAllVideos(userId);
-    }
-
-    /**
-     * 得到用户点赞过的所有视频
-     * @return ResponseResult 点赞过的所有视频
-     */
-    @GetMapping("/likes")
-    public ResponseResult likeVideos() {
-        return videoDoLikeService.showLikesList();
+    @GetMapping("/getPublishedVideos")
+    public ResponseResult<VideoList> getPublishedVideos(Integer currentPage,Integer userId) {
+        return videoDoLikeService.getPublishedVideos(currentPage,userId);
     }
 
     /**
