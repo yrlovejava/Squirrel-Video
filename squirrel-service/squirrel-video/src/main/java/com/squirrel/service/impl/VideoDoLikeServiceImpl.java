@@ -105,7 +105,7 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
         }
 
         // 2.获取所有的key
-        // set集合的key
+        // set集合的key，优化用bitmap存储
         String setKey = VideoConstant.SET_LIKE_KEY + videoId;
         // kv 类型的 key(key 为 videoId,value 为点赞总数)
         String strKey = VideoConstant.STRING_LIKE_KEY + videoId;
@@ -125,8 +125,8 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
         if (type == 1) {
             // 添加到 redis，以 set 方式存储，key 为 videoId，value 为userId
             // 查询用户是否点过赞
-            Boolean isMember = this.stringRedisTemplate.opsForSet().isMember(setKey, String.valueOf(userId));
-            if (Boolean.FALSE.equals(isMember)) {
+            Boolean isLiked = this.stringRedisTemplate.opsForValue().getBit(setKey, userId);
+            if (Boolean.FALSE.equals(isLiked)) {
                 // 添加到 redis
                 // redis数据加一
                 try {
@@ -150,8 +150,8 @@ public class VideoDoLikeServiceImpl implements VideoDoLikeService {
         } else {
             // 取消点赞
             // 判断是否点过赞
-            Boolean isMember = this.stringRedisTemplate.opsForSet().isMember(setKey, String.valueOf(userId));
-            if (Boolean.TRUE.equals(isMember)) {
+            Boolean isLiked = this.stringRedisTemplate.opsForValue().getBit(setKey, userId);
+            if (Boolean.TRUE.equals(isLiked)) {
                 // 如果点过赞
                 // 删除数据
                 // redis数据减一

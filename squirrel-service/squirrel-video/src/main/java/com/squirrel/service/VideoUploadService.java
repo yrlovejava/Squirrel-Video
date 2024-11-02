@@ -31,9 +31,10 @@ public interface VideoUploadService extends IService<Video> {
     /**
      * 获取视频，每次10个
      * @param lastVideoId 上一次视频id
+     * @param section 分区
      * @return ResponseResult
      */
-    ResponseResult<GetVideoInfo> videos(Integer lastVideoId);
+    ResponseResult<GetVideoInfo> videos(Integer lastVideoId,Integer section);
 
     /**
      * 通过 videoId 得到 video 的实体类

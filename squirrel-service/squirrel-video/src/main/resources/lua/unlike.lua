@@ -8,8 +8,9 @@
 --ARGV[1] 当前用户的id
 --ARGV[2] 视频的id
 
--- 1.删除数据
-if (redis.call('srem',KEYS[1],ARGV[1]) == 0) then
+-- 1.删除数据，利用bitmap做优化
+-- setbit 返回值是原来存储位的值
+if (redis.call('setbit',KEYS[1],ARGV[1],0) == 0) then
     redis.error_reply("already unlike")
 end
 

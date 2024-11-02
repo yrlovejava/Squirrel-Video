@@ -72,11 +72,12 @@ public class VideoController {
     /**
      * 获取视频，每次10个
      * @param lastVideoId 上一次视频id
+     * @param section 分区
      * @return ResponseResult
      */
     @GetMapping("/getVideos")
-    public ResponseResult getVideo(Integer lastVideoId){
-        return videoUploadService.videos(lastVideoId);
+    public ResponseResult getVideos(Integer lastVideoId,Integer section){
+        return videoUploadService.videos(lastVideoId,section);
     }
 
     /**

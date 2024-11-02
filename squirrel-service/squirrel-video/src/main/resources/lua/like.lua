@@ -8,8 +8,9 @@
 --ARGV[1] 当前用户的id
 --ARGV[2] 视频的id
 
--- 1.视频点赞，如果已经点赞就报错
-if (redis.call('sadd',KEYS[1],ARGV[1]) == 0 ) then
+-- 1.视频点赞，如果已经点赞就报错，用bitmap存储
+-- setbit 返回值是原来存储位的值
+if (redis.call('setbit',KEYS[1],ARGV[1],1) == 1 ) then
     redis.error_reply("already like!")
 end
 

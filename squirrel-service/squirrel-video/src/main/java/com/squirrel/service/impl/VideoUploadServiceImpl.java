@@ -198,10 +198,11 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
      * 在每个用户观看视频时根据 NOW_LIST_ID + userId 键在redis中取出对应 id 的list
      *
      * @param lastVideoId 上一次视频id
+     * @param section 分区
      * @return ResponseResult
      */
     @Override
-    public ResponseResult<GetVideoInfo> videos(Integer lastVideoId) {
+    public ResponseResult<GetVideoInfo> videos(Integer lastVideoId,Integer section) {
         // 1.参数校验
         if (lastVideoId == null) {
             throw new NullParamException();
@@ -209,6 +210,9 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
         if (lastVideoId == 0){
             String lastVideoIdStr = stringRedisTemplate.opsForValue().get(VideoConstant.LAST_VIDEO_ID);
             lastVideoId = Integer.parseInt(Objects.requireNonNull(lastVideoIdStr));
+        }
+        if (section == null){
+            section = VideoConstant.SELECTION_HOT;
         }
 
         // 2.查询redis
@@ -224,6 +228,9 @@ public class VideoUploadServiceImpl extends ServiceImpl<VideoMapper, Video> impl
                 getVideoInfo.setLastVideoId(i);
                 getVideoInfo.setTotal(videoList.size());
                 return ResponseResult.successResult(getVideoInfo);
+            }
+            if (!Objects.equals(section,video.getSection()) && !Objects.equals(section,0)) {
+                continue;
             }
             VideoDetailInfo videoDetailInfo=new VideoDetailInfo();
             BeanUtils.copyProperties(video,videoDetailInfo);
