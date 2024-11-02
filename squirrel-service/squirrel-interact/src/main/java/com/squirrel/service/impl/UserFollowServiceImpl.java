@@ -19,6 +19,7 @@ import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -102,6 +103,7 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
      * @return ResponseResult 操作结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ResponseResult follow(UserFollowDTO dto) {
         // 1.参数校验
         if (dto == null || dto.getUserId() == null || dto.getType() == null){
@@ -142,20 +144,25 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
             Object[] values = new Object[]{userId.toString(),dto.getUserId().toString()};
             if (op.equals(InteractConstant.FOLLOW_CODE)){
                 // 关注操作
-                // 4.2执行lua脚本
+                // 4.2先写数据库
+                Follow follow = Follow.builder()
+                        .userId(userId)
+                        .followId(dto.getUserId())
+                        .build();
+                save(follow);
+                // 4.3再执行lua脚本
                 stringRedisTemplate.execute(FOLLOW_SCRIPT,keys,values);
             }else {
                 // 取消关注操作
-                // 4.2执行lua脚本
+                // 4.2先在数据库中删除数据
+                getBaseMapper().delete(Wrappers.<Follow>lambdaQuery()
+                        .eq(Follow::getUserId,userId)
+                        .eq(Follow::getFollowId,dto.getUserId())
+                );
+                // 4.3执行再执行lua脚本
                 stringRedisTemplate.execute(UNFOLLOW_SCRIPT,keys,values);
             }
 
-            // 5.在数据库中删除
-            // TODO: 具体怎么实现数据一致性有待考虑
-            getBaseMapper().delete(Wrappers.<Follow>lambdaQuery()
-                    .eq(Follow::getUserId,userId)
-                    .eq(Follow::getFollowId,dto.getUserId())
-            );
         }catch (Exception e){
             if (e instanceof RedisSystemException){
                 throw new ErrorOperationException(e.getMessage());

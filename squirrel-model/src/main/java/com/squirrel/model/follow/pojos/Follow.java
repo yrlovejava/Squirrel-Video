@@ -31,13 +31,13 @@ public class Follow {
      * 被关注的用户
      */
     @TableField("follow_id")
-    private Integer followId;
+    private Long followId;
 
     /**
      * 操作关注的用户
      */
     @TableField("user_id")
-    private Integer userId;
+    private Long userId;
 
     /**
      * 创建时间
