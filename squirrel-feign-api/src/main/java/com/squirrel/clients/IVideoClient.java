@@ -1,5 +1,6 @@
 package com.squirrel.clients;
 
+import com.squirrel.interceptor.MyFeignRequestInterceptor;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.video.vos.VideoDetail;
 import com.squirrel.model.video.vos.VideoInfo;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 /**
  * 视频服务的远程接口
  */
-@FeignClient("squirrel-video")
+@FeignClient(value = "squirrel-video",configuration = MyFeignRequestInterceptor.class)
 public interface IVideoClient {
 
     /**

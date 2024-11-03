@@ -80,25 +80,6 @@ public class VideoController {
         return videoUploadService.videos(lastVideoId,section);
     }
 
-    /**
-     * 得到用户被赞数
-     * @param userId 用户id
-     * @return ResponseResult<Integer> 用户被赞数
-     */
-    @GetMapping("/getUserLikes")
-    public ResponseResult<Integer> getUserLikes(@RequestParam("userId")Long userId){
-        return videoDoLikeService.getUserLikes(userId);
-    }
-
-    /**
-     * 得到用户被收藏数
-     * @param userId 用户id
-     * @return ResponseResult<Integer> 用户被收藏数
-     */
-    @GetMapping("/getUserCollects")
-    public ResponseResult<Integer> getUserCollects(@RequestParam("userId")Long userId) {
-        return videoDoLikeService.getUserCollects(userId);
-    }
 
     /**
      * 得到用户发布过的视频

@@ -1,5 +1,6 @@
 package com.squirrel.clients;
 
+import com.squirrel.interceptor.MyFeignRequestInterceptor;
 import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.response.ResponseResult;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -9,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 /**
  * 交互服务客户端接口
  */
-@FeignClient("squirrel-interact")
+@FeignClient(value = "squirrel-interact",configuration = MyFeignRequestInterceptor.class)
 public interface IInteractClient {
 
     /**

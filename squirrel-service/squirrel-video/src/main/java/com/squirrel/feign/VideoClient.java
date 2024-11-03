@@ -26,17 +26,19 @@ public class VideoClient implements IVideoClient {
 
     /**
      * 得到用户被赞数
+     *
      * @param userId 用户id
      * @return ResponseResult<Integer> 用户被赞数
      */
     @GetMapping("/azaz/video/getUserLikes")
     @Override
-    public ResponseResult<Integer> getUserLikes(@RequestParam("userId")Long userId){
+    public ResponseResult<Integer> getUserLikes(@RequestParam("userId") Long userId) {
         return videoDoLikeService.getUserLikes(userId);
     }
 
     /**
      * 得到用户作评总数
+     *
      * @param userId 用户id
      * @return 作品总数
      */
@@ -47,11 +49,23 @@ public class VideoClient implements IVideoClient {
     }
 
     /**
+     * 得到用户被收藏数
+     *
+     * @param userId 用户id
+     * @return ResponseResult<Integer> 用户被收藏数
+     */
+    @GetMapping("/azaz/video/getUserCollects")
+    public ResponseResult<Integer> getUserCollects(@RequestParam("userId") Long userId) {
+        return videoDoLikeService.getUserCollects(userId);
+    }
+
+    /**
      * 得到视频简略信息
+     *
      * @param videoId 视频id
      * @return 视频简略信息
      */
-    @GetMapping("/info")
+    @GetMapping("/azaz/video/info")
     @Override
     public ResponseResult<VideoInfo> getVideoInfo(Long videoId) {
         return videoUploadService.getVideoInfo(videoId);
@@ -59,10 +73,11 @@ public class VideoClient implements IVideoClient {
 
     /**
      * 得到视频详细信息
+     *
      * @param videoId 视频id
      * @return 视频详细信息
      */
-    @GetMapping("/detailInfo")
+    @GetMapping("/azaz/video/detailInfo")
     @Override
     public ResponseResult<VideoDetail> getVideoDetailInfo(Long videoId) {
         return videoUploadService.getVideoDetailInfo(videoId);

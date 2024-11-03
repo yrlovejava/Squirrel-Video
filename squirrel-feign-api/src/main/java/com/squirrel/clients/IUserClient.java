@@ -1,5 +1,6 @@
 package com.squirrel.clients;
 
+import com.squirrel.interceptor.MyFeignRequestInterceptor;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -12,7 +13,7 @@ import java.util.Set;
 /**
  * 用户服务客户端远程接口
  */
-@FeignClient("squirrel-user")
+@FeignClient(value = "squirrel-user",configuration = MyFeignRequestInterceptor.class)
 public interface IUserClient {
 
     /**
