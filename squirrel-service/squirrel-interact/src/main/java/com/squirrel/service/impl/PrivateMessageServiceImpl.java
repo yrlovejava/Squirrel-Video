@@ -16,11 +16,11 @@ import com.squirrel.model.message.vos.MessageVO;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.vos.UserPersonalInfoVO;
 import com.squirrel.service.PrivateMessageService;
+import com.squirrel.service.UserFollowService;
 import com.squirrel.utils.ThreadLocalUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,10 +46,10 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
     private StringRedisTemplate stringRedisTemplate;
 
     @Resource
-    private RedissonClient redissonClient;
+    private RocketMQTemplate rocketMQTemplate;
 
     @Resource
-    private RocketMQTemplate rocketMQTemplate;
+    private UserFollowService userFollowService;
 
     /**
      * 发送私信
@@ -59,7 +59,7 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
      * @return ResponseResult 发送结果
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public ResponseResult send(MessageSendDTO dto) {
         log.info("发送私信: {}",dto);
         // 1.校验参数
@@ -83,10 +83,8 @@ public class PrivateMessageServiceImpl extends ServiceImpl<PrivateMessageMapper,
         }
 
         // 3.检查是否互相关注
-        // 3.1获取key
-        String friendKey = InteractConstant.REDIS_FRIEND_KEY + userId;
         // 3.1从redis中查询
-        Boolean isFollowEachOther = stringRedisTemplate.opsForSet().isMember(friendKey, dto.getReceiverId().toString());
+        Boolean isFollowEachOther = userFollowService.isFollowEachOther(userId,dto.getReceiverId()).getData();
 
         // 4.如果未互相关注最多只能发送三条私信，未关注不能分享视频
         String messageKey = InteractConstant.REDIS_PRIVATE_MESSAGE_KEY + Math.min(userId, dto.getReceiverId()) + "-" + Math.max(userId, dto.getReceiverId()) + ":";
