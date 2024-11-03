@@ -22,10 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 关注接口的实现类
@@ -63,37 +60,48 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
     }
 
     /**
-     * 是否相关关注
-     * @param dto 是否相互关注的 dto
-     * @return ResponseResult 是否相互关注
+     * 是否相互关注
+     * @param firstUser 第一个用户id
+     * @param secondUser 第二个用户id
+     * @return ResponseResult<Boolean> 是否相互关注
      */
     @Override
-    public ResponseResult<Boolean> isFollowEachOther(FollowEachOtherDTO dto) {
+    public ResponseResult<Boolean> isFollowEachOther(Long firstUser,Long secondUser) {
         // 1.参数校验
-        if (dto == null || dto.getFirstUserId() == null || dto.getSecondUserId() == null) {
+        if (firstUser == null || secondUser == null) {
             throw new NullParamException();
         }
 
-        // 2.查询数据库
+        // 2.查询redis
+        // 2.1获取key
+        String firstUserKey = InteractConstant.REDIS_FOLLOW_KEY + firstUser;
+        String secondUserKey = InteractConstant.REDIS_FOLLOW_KEY + secondUser;
         boolean isFollowEachOther = false;
-        try {
-            Long count1 = getBaseMapper().selectCount(Wrappers.<Follow>lambdaQuery()
-                    .eq(Follow::getFollowId, dto.getFirstUserId()) // 第一个用户被关注
-                    .eq(Follow::getUserId, dto.getSecondUserId()) // 第二个用户关注
-            );
-            Long count2 = getBaseMapper().selectCount(Wrappers.<Follow>lambdaQuery()
-                    .eq(Follow::getFollowId, dto.getSecondUserId()) // 第二个用户被关注
-                    .eq(Follow::getUserId, dto.getFirstUserId()) // 第一个用户关注
-            );
-            if (count1 == 1 && count2 == 1){
-                isFollowEachOther = true;
+        Boolean isFollow = stringRedisTemplate.opsForSet().isMember(firstUserKey, secondUser.toString());
+        Boolean isFriend = stringRedisTemplate.opsForSet().isMember(secondUserKey, firstUser.toString());
+        if (isFollow == null || isFriend == null) {
+            // 3.redis中没有，查询数据库
+            try {
+                Long count1 = getBaseMapper().selectCount(Wrappers.<Follow>lambdaQuery()
+                        .eq(Follow::getFollowId, firstUser) // 第一个用户被关注
+                        .eq(Follow::getUserId, secondUser) // 第二个用户关注
+                );
+                Long count2 = getBaseMapper().selectCount(Wrappers.<Follow>lambdaQuery()
+                        .eq(Follow::getFollowId, firstUser) // 第二个用户被关注
+                        .eq(Follow::getUserId, secondUser) // 第一个用户关注
+                );
+                if (count1 == 1 && count2 == 1){
+                    isFollowEachOther = true;
+                }
+            }catch (Exception ex){
+                log.error("查询数据库出错: {}",ex.toString());
+                throw new DbOperationException("查询数据库出错");
             }
-        }catch (Exception ex){
-            log.error("查询数据库出错: {}",ex.toString());
-            throw new DbOperationException("查询数据库出错");
+        }else {
+            isFollowEachOther = Boolean.TRUE.equals(isFollow) && Boolean.TRUE.equals(isFriend);
         }
 
-        // 3.返回结果
+        // 4.返回结果
         return ResponseResult.successResult(isFollowEachOther);
     }
 
@@ -224,13 +232,15 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
             return ResponseResult.successResult(Collections.emptyList());
         }
 
-
         // 3.远程调用，查询数据库
         return userClient.getUserPersonInfos(ids);
     }
 
     /**
      * 获取关注列表
+     * 现在是全部从redis中查询然后解析，100个用户 耗时大概1s钟
+     * 从数据库中直接查询耗时 400多ms
+     * 但是这里可以做分页处理，那么从redis遍历查询的性能就差的不多了
      * @return ResponseResult 关注列表
      */
     @Override
@@ -250,8 +260,16 @@ public class UserFollowServiceImpl extends ServiceImpl<UserFollowMapper, Follow>
             return ResponseResult.successResult(Collections.emptyList());
         }
 
-        // 3.远程调用，查询数据库
-        return userClient.getUserPersonInfos(ids);
+        // 3.远程调用，查询关注列表信息
+        List<UserPersonalInfoVO> follows = new ArrayList<>();
+        for (String id : ids) {
+            ResponseResult<UserPersonalInfoVO> userPersonInfo = userClient.getUserPersonInfo(Long.valueOf(id));
+            if (userPersonInfo == null || userPersonInfo.getData() == null){
+                continue;
+            }
+            follows.add(userPersonInfo.getData());
+        }
+        return ResponseResult.successResult(follows);
     }
 
     /**

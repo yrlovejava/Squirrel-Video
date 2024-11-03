@@ -16,10 +16,11 @@ public interface UserFollowService extends IService<Follow> {
 
     /**
      * 是否相互关注
-     * @param dto 是否相互关注的 dto
-     * @return ResponseResult 是否相互关注
+     * @param firstUser 第一个用户id
+     * @param secondUser 第二个用户id
+     * @return ResponseResult<Boolean> 是否相互关注
      */
-    ResponseResult<Boolean> isFollowEachOther(FollowEachOtherDTO dto);
+    ResponseResult<Boolean> isFollowEachOther(Long firstUser,Long secondUser);
 
     /**
      * 关注操作

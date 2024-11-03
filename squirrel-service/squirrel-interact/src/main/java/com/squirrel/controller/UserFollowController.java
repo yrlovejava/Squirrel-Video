@@ -1,5 +1,6 @@
 package com.squirrel.controller;
 
+import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.follow.dtos.UserFollowDTO;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.model.user.vos.UserPersonalInfoVO;
@@ -45,5 +46,17 @@ public class UserFollowController {
     @GetMapping("/list")
     public ResponseResult<List<UserPersonalInfoVO>> getFollowList(){
         return userFollowService.getFollowList();
+    }
+
+    /**
+     * 是否相互关注
+     * @param firstUser 第一个用户id
+     * @param secondUser 第二个用户id
+     * @return ResponseResult<Boolean> 是否相互关注
+     */
+    @GetMapping("/ifFollowEachOther")
+    public ResponseResult<Boolean> isFollowEachOther(@RequestParam("firstUser") Long firstUser,
+                                                     @RequestParam("secondUser") Long secondUser) {
+        return userFollowService.isFollowEachOther(firstUser,secondUser);
     }
 }

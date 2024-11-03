@@ -1,7 +1,6 @@
 package com.squirrel.feign;
 
 import com.squirrel.clients.IInteractClient;
-import com.squirrel.model.follow.dtos.FollowEachOtherDTO;
 import com.squirrel.model.response.ResponseResult;
 import com.squirrel.service.UserFollowService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,23 +41,12 @@ public class InteractClient implements IInteractClient {
     }
 
     /**
-     * 是否相互关注
-     * @param dto 两个用户的信息
-     * @return ResponseResult 是否相互关注
-     */
-    @Override
-    @GetMapping("/azaz/follow/eachOther")
-    public ResponseResult<Boolean> isFollowEachOther(FollowEachOtherDTO dto) {
-        return userFollowService.isFollowEachOther(dto);
-    }
-
-    /**
      * 判断是否关注
      * @param firstUser 第一个用户
      * @param senderUser 第二个用户
      * @return 是否关注
      */
-    @GetMapping("/isFollow")
+    @GetMapping("/azaz/interact/follow/isFollow")
     public ResponseResult<Boolean> isFollow(@RequestParam("firstUser")Long firstUser,
                                             @RequestParam("senderUser")Long senderUser) {
         return userFollowService.isFollow(firstUser,senderUser);
